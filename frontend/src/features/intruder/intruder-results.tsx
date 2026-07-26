@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import { ResponseView } from '@/components/response-view'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowUpDown, Check, Crosshair, Loader2 } from 'lucide-react'
+import { useSortedResults } from '@/lib/use-sorted-results'
 import type { IntruderResultDetail, IntruderResultSummary } from '@/lib/types'
 
 type SortKey = 'index' | 'status' | 'length' | 'duration_ms'
@@ -41,15 +42,15 @@ export function IntruderResults({
   const [sortKey, setSortKey] = useState<SortKey>('index')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
-  const sorted = useMemo(() => {
-    const copy = [...results]
-    copy.sort((a, b) => {
+  const compare = useCallback(
+    (a: IntruderResultSummary, b: IntruderResultSummary) => {
       const av = sortKey === 'duration_ms' ? a.duration_ms : a[sortKey]
       const bv = sortKey === 'duration_ms' ? b.duration_ms : b[sortKey]
       return sortDir === 'asc' ? av - bv : bv - av
-    })
-    return copy
-  }, [results, sortKey, sortDir])
+    },
+    [sortKey, sortDir],
+  )
+  const sorted = useSortedResults(results, compare)
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {

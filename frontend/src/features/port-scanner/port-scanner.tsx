@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,7 @@ import { EmptyState } from '@/components/empty-state'
 import { Play, Square, Loader2, ArrowUpDown, Radar } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useProxyEvents } from '@/lib/ws'
+import { useSortedResults } from '@/lib/use-sorted-results'
 import type {
   PortScanPresets,
   PortScanResult,
@@ -201,9 +202,8 @@ export function PortScanner() {
     }
   }
 
-  const sorted = useMemo(() => {
-    const copy = [...results]
-    copy.sort((a, b) => {
+  const compare = useCallback(
+    (a: PortScanResult, b: PortScanResult) => {
       let av: number | string = a[sortKey]
       let bv: number | string = b[sortKey]
       if (sortKey === 'state') {
@@ -213,9 +213,10 @@ export function PortScanner() {
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
       return 0
-    })
-    return copy
-  }, [results, sortKey, sortDir])
+    },
+    [sortKey, sortDir],
+  )
+  const sorted = useSortedResults(results, compare)
 
   const openCount = results.filter((r) => r.state === 'open').length
   const closedCount = results.filter((r) => r.state === 'closed').length

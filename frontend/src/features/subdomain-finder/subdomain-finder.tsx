@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ import { EmptyState } from '@/components/empty-state'
 import { Play, Square, Loader2, ArrowUpDown, Globe } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useProxyEvents } from '@/lib/ws'
+import { useSortedResults } from '@/lib/use-sorted-results'
 import type {
   SubdomainResult,
   SubdomainResultEvent,
@@ -160,17 +161,17 @@ export function SubdomainFinder() {
 
   const visible = showUnresolved ? results : results.filter((r) => r.resolved)
 
-  const sorted = useMemo(() => {
-    const copy = [...visible]
-    copy.sort((a, b) => {
+  const compare = useCallback(
+    (a: SubdomainResult, b: SubdomainResult) => {
       const av = a[sortKey]
       const bv = b[sortKey]
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
       return 0
-    })
-    return copy
-  }, [visible, sortKey, sortDir])
+    },
+    [sortKey, sortDir],
+  )
+  const sorted = useSortedResults(visible, compare)
 
   const foundCount = results.filter((r) => r.resolved).length
   const running = status === 'running'

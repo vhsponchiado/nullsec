@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ import { EmptyState } from '@/components/empty-state'
 import { Play, Square, Loader2, ArrowUpDown, Waypoints } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useProxyEvents } from '@/lib/ws'
+import { useSortedResults } from '@/lib/use-sorted-results'
 import type { SpiderPage, SpiderPageEvent, SpiderStatus } from '@/lib/types'
 import { SpiderGuide } from './spider-guide'
 
@@ -124,17 +125,17 @@ export function Spider() {
     }
   }
 
-  const sorted = useMemo(() => {
-    const copy = [...pages]
-    copy.sort((a, b) => {
+  const compare = useCallback(
+    (a: SpiderPage, b: SpiderPage) => {
       const av = a[sortKey]
       const bv = b[sortKey]
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
       return 0
-    })
-    return copy
-  }, [pages, sortKey, sortDir])
+    },
+    [sortKey, sortDir],
+  )
+  const sorted = useSortedResults(pages, compare)
 
   const formsFound = pages.reduce((acc, p) => acc + (p.forms?.length ?? 0), 0)
   const running = status === 'running'

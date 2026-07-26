@@ -1,25 +1,57 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
+import { Loader2 } from 'lucide-react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar, type NavKey } from '@/components/app-sidebar'
-import { ProxyHistory } from '@/features/proxy-history/proxy-history'
-import { Intercept } from '@/features/intercept/intercept'
-import { Repeater, type RepeaterSeed } from '@/features/repeater/repeater'
-import { Intruder, type IntruderSeed } from '@/features/intruder/intruder'
-import { Decoder } from '@/features/decoder/decoder'
-import { PortScanner } from '@/features/port-scanner/port-scanner'
-import { Spider } from '@/features/spider/spider'
-import { PassiveScan } from '@/features/passive-scan/passive-scan'
-import { SubdomainFinder } from '@/features/subdomain-finder/subdomain-finder'
-import { Settings } from '@/features/settings/settings'
-import { Certificate } from '@/features/certificate/certificate'
-import { WordPressCheck } from '@/features/wordpress-check/wordpress-check'
-import { SqliCheck } from '@/features/sqli-check/sqli-check'
-import { XssCheck } from '@/features/xss-check/xss-check'
 import type { RequestSeed } from '@/components/request-editor'
 import { headersToText, parseJSONHeaders } from '@/lib/headers'
 import { api } from '@/lib/api'
 import type { Headers, SendTarget, SendableRequest } from '@/lib/types'
+import type { RepeaterSeed } from '@/features/repeater/repeater'
+import type { IntruderSeed } from '@/features/intruder/intruder'
+
+// Each tool is its own chunk, loaded on first visit rather than all bundled
+// together up front — with 14 of these (several sizable, e.g. the SQLi/XSS
+// checkers), eagerly importing every one of them meant a single ~650KB JS
+// chunk even though a session typically only ever opens a handful of tabs.
+const ProxyHistory = lazy(() =>
+  import('@/features/proxy-history/proxy-history').then((m) => ({ default: m.ProxyHistory })),
+)
+const Intercept = lazy(() =>
+  import('@/features/intercept/intercept').then((m) => ({ default: m.Intercept })),
+)
+const Repeater = lazy(() =>
+  import('@/features/repeater/repeater').then((m) => ({ default: m.Repeater })),
+)
+const Intruder = lazy(() =>
+  import('@/features/intruder/intruder').then((m) => ({ default: m.Intruder })),
+)
+const Decoder = lazy(() => import('@/features/decoder/decoder').then((m) => ({ default: m.Decoder })))
+const PortScanner = lazy(() =>
+  import('@/features/port-scanner/port-scanner').then((m) => ({ default: m.PortScanner })),
+)
+const Spider = lazy(() => import('@/features/spider/spider').then((m) => ({ default: m.Spider })))
+const PassiveScan = lazy(() =>
+  import('@/features/passive-scan/passive-scan').then((m) => ({ default: m.PassiveScan })),
+)
+const SubdomainFinder = lazy(() =>
+  import('@/features/subdomain-finder/subdomain-finder').then((m) => ({ default: m.SubdomainFinder })),
+)
+const Settings = lazy(() =>
+  import('@/features/settings/settings').then((m) => ({ default: m.Settings })),
+)
+const Certificate = lazy(() =>
+  import('@/features/certificate/certificate').then((m) => ({ default: m.Certificate })),
+)
+const WordPressCheck = lazy(() =>
+  import('@/features/wordpress-check/wordpress-check').then((m) => ({ default: m.WordPressCheck })),
+)
+const SqliCheck = lazy(() =>
+  import('@/features/sqli-check/sqli-check').then((m) => ({ default: m.SqliCheck })),
+)
+const XssCheck = lazy(() =>
+  import('@/features/xss-check/xss-check').then((m) => ({ default: m.XssCheck })),
+)
 
 const TITLES: Record<NavKey, string> = {
   history: 'Proxy History',
@@ -166,7 +198,15 @@ function App() {
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   className="h-full"
                 >
-                  {renderPanel(nav)}
+                  <Suspense
+                    fallback={
+                      <div className="h-full flex items-center justify-center text-muted-foreground">
+                        <Loader2 className="size-6 animate-spin" />
+                      </div>
+                    }
+                  >
+                    {renderPanel(nav)}
+                  </Suspense>
                 </motion.div>
               </AnimatePresence>
             </main>

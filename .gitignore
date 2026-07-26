@@ -1,0 +1,35 @@
+# Nullsec's own runtime data (CA keys, SQLite proxy history) never lives
+# inside the repo — it defaults to ~/.nullsec — but ignore it here too in
+# case DB_PATH/CA_CERT_PATH/CA_KEY_PATH are ever pointed at a path under the
+# checkout. Proxy history can contain live cookies and auth headers captured
+# from real browsing sessions, so this must never be committed. Matched at
+# any depth (not just directly under backend/) — a stray backend/cmd/*.db
+# from manual testing is exactly as sensitive as one at backend/*.db.
+backend/**/*.db
+backend/**/*.db-shm
+backend/**/*.db-wal
+*.pem
+
+# Go build artifacts
+backend/server
+backend/*.exe
+backend/*.test
+/dist/
+
+# Node / frontend (frontend/ has its own .gitignore; this covers the rest)
+node_modules/
+
+# Editors and OS cruft
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.sw?
+
+# Local environment overrides
+.env
+.env.local
+
+# Claude Code: settings.json is the shared project config; settings.local.json
+# is per-developer (tool permission grants, local paths) and never shared.
+.claude/settings.local.json

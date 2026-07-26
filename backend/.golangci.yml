@@ -1,0 +1,45 @@
+version: "2"
+linters:
+  enable:
+    - bodyclose
+    - gosec
+    - misspell
+    - revive
+    - unconvert
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+  exclusions:
+    # internal/portscan/topports_gen.go carries the standard
+    # "Code generated ... DO NOT EDIT." marker, which this picks up
+    # automatically — no per-path rule needed.
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Test fixtures deliberately simulate vulnerable targets (e.g. an
+      # httptest handler that reflects a query param unescaped) to prove the
+      # scanners detect them — that's the point of the test, not a real
+      # instance of the vulnerability shipping in this codebase.
+      - path: _test\.go
+        linters:
+          - gosec
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

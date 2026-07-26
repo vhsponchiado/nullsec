@@ -38,6 +38,7 @@ func TestRetryOnceTransport_RetriesGETOnFailure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		t.Fatalf("status = %d, want 200 from the retried attempt", resp.StatusCode)
 	}
@@ -51,7 +52,10 @@ func TestRetryOnceTransport_OnlyRetriesOnce(t *testing.T) {
 	transport := &retryOnceTransport{rt: inner}
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	_, err := transport.RoundTrip(req)
+	resp, err := transport.RoundTrip(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err == nil {
 		t.Fatal("expected the second failure to be surfaced, not silently retried again")
 	}
@@ -66,7 +70,10 @@ func TestRetryOnceTransport_DoesNotRetryPOST(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "http://example.com/", nil)
 	req.ContentLength = 0
-	_, err := transport.RoundTrip(req)
+	resp, err := transport.RoundTrip(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err == nil {
 		t.Fatal("POST should not be retried even with no body, since it isn't idempotent")
 	}
@@ -81,7 +88,10 @@ func TestRetryOnceTransport_DoesNotRetryGETWithBody(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 	req.ContentLength = 10 // simulate a GET carrying a body
-	_, err := transport.RoundTrip(req)
+	resp, err := transport.RoundTrip(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err == nil {
 		t.Fatal("a GET with a non-empty body should not be retried (the body reader may already be consumed)")
 	}
@@ -95,7 +105,11 @@ func TestRetryOnceTransport_NoRetryNeededOnSuccess(t *testing.T) {
 	transport := &retryOnceTransport{rt: inner}
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	if _, err := transport.RoundTrip(req); err != nil {
+	resp, err := transport.RoundTrip(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if inner.calls != 1 {

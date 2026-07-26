@@ -19,7 +19,10 @@ func newTestServer(h *Hub) (*httptest.Server, string) {
 
 func dial(t *testing.T, wsURL string) *websocket.Conn {
 	t.Helper()
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("dial %s: %v", wsURL, err)
 	}
@@ -105,7 +108,10 @@ func TestHub_BroadcastToDisconnectedClientPrunesIt(t *testing.T) {
 	// A second client that goes away without a clean close handshake —
 	// this exercises the write-error cleanup path inside Broadcast itself,
 	// not just the read-loop cleanup in ServeHTTP.
-	dead, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	dead, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}

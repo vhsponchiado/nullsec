@@ -53,21 +53,16 @@ func (f *fakeBroadcaster) Broadcast(eventType string, payload any) {
 	f.calls = append(f.calls, broadcastCall{eventType, payload})
 }
 
-func (f *fakeBroadcaster) events() []broadcastCall {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	out := make([]broadcastCall, len(f.calls))
-	copy(out, f.calls)
-	return out
-}
-
 // roundTripFunc adapts a plain function to http.RoundTripper.
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
-// swappableTransport lets each test point the Forwarder/Repeater's outbound
-// round trip at a different stub without rebuilding the whole harness.
+// swappableTransport wraps the Forwarder/Repeater's outbound round trip
+// behind a mutex-guarded indirection — not swapped by any test today, but
+// keeping the transport itself thread-safe-by-construction here means a
+// future test can point it at a different stub without rebuilding the
+// whole harness or auditing for data races.
 type swappableTransport struct {
 	mu sync.Mutex
 	rt http.RoundTripper
@@ -78,12 +73,6 @@ func (s *swappableTransport) RoundTrip(r *http.Request) (*http.Response, error) 
 	rt := s.rt
 	s.mu.Unlock()
 	return rt.RoundTrip(r)
-}
-
-func (s *swappableTransport) set(rt http.RoundTripper) {
-	s.mu.Lock()
-	s.rt = rt
-	s.mu.Unlock()
 }
 
 func okTransport() http.RoundTripper {

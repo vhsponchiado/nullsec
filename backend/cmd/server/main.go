@@ -171,7 +171,7 @@ func main() {
 	// "/api/" and "/ws" above stay more specific and win over this "/".
 	if staticDir := os.Getenv("STATIC_DIR"); staticDir != "" {
 		apiMux.Handle("/", http.FileServer(http.Dir(staticDir)))
-		log.Printf("serving frontend static files from %s", staticDir)
+		log.Printf("serving frontend static files from %q", staticDir) //nolint:gosec // G706: %q quotes/escapes staticDir (an operator-set env var, not request data), so a newline in it can't forge a log line
 	}
 
 	apiSrv := newServer(":"+apiPort, withCORS(apiMux))

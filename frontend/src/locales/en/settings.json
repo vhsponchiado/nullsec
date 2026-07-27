@@ -1,0 +1,22 @@
+{
+  "upstream_proxy_title": "Upstream proxy",
+  "type_direct": "None (direct)",
+  "type_socks5": "SOCKS5",
+  "type_http": "HTTP(S) proxy",
+  "badge_direct": "Direct",
+  "upstream_description": "Route outbound traffic from Repeater, Intruder, Port Scanner and the Subdomain Finder's crt.sh lookup through a proxy you control (a local Tor/VPN SOCKS listener, or an HTTP(S) forward proxy, e.g. a client-provided jump box), instead of dialing targets directly from this machine.",
+  "loading": "Loading…",
+  "type_label": "Type",
+  "address_label": "Address",
+  "address_placeholder_socks5": "127.0.0.1:9050",
+  "address_placeholder_http": "proxy.example.com:8080",
+  "username_label": "Username (optional)",
+  "password_label": "Password (optional)",
+  "save": "Save",
+  "saved": "Saved",
+  "explainer_title": "What this does and doesn't do",
+  "explainer_p1": "Once set, every request Repeater and Intruder send, every port the Port Scanner probes, and the Subdomain Finder's crt.sh lookup all go through this proxy instead of leaving directly from this machine.",
+  "explainer_p2_bold": "DNS is the exception",
+  "explainer_p2_rest": ": the Subdomain Finder's brute-force step resolves names with the system resolver directly; SOCKS5/HTTP proxying doesn't cover DNS the same way.",
+  "explainer_note": "This changes which IP your traffic originates from; it doesn't change whether using these tools against a given target is authorized. Only route engagement traffic through infrastructure you're entitled to use."
+}

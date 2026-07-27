@@ -1,0 +1,19 @@
+{
+  "request_title": "Requisição",
+  "method_label": "Método",
+  "url_label": "URL",
+  "url_placeholder": "https://authorized-target.com/product?id=1",
+  "send": "Enviar",
+  "body_label": "Body",
+  "headers_label": "Headers",
+  "send_history_title": "Histórico de envios",
+  "empty_sends_title": "Nenhum envio ainda",
+  "empty_sends_description": "Edite a requisição acima e clique em Enviar.",
+  "sending_badge": "enviando…",
+  "error_badge": "erro",
+  "response_title": "Resposta",
+  "sending_label": "Enviando…",
+  "error_prefix": "Erro: {{error}}",
+  "empty_response_title": "Nada enviado ainda",
+  "empty_response_description": "A resposta aparece aqui depois do envio."
+}

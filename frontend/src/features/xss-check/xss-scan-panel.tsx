@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ interface XssScanPanelProps {
 /** XSS's "Scan (History)" mode: batch-runs the check across every request
  * already captured in Proxy History, instead of one URL at a time. */
 export function XssScanPanel({ onOpenInChecker }: XssScanPanelProps) {
+  const { t } = useTranslation('xss-check')
   const [scanHost, setScanHost] = useState('')
   const [scanId, setScanId] = useState<string | null>(null)
   const [scanStatus, setScanStatus] = useState<XssScanStatus | null>(null)
@@ -81,7 +83,7 @@ export function XssScanPanel({ onOpenInChecker }: XssScanPanelProps) {
     try {
       await api.stopXssScan(scanId)
     } catch {
-      // the scan may have already finished server-side — nothing to do
+      // the scan may have already finished server-side, so there's nothing to do
     }
   }
 
@@ -96,16 +98,12 @@ export function XssScanPanel({ onOpenInChecker }: XssScanPanelProps) {
   return (
     <>
       <div className="flex flex-col gap-4 border rounded-lg p-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Batch scan</h3>
-        <p className="text-xs text-muted-foreground">
-          Runs the same check against every request already captured in Proxy History, instead of
-          one URL at a time. Filter by host to keep it scoped to a target you're authorized to
-          test — leave it blank to scan everything in History.
-        </p>
+        <h3 className="text-sm font-medium text-muted-foreground">{t('batch_scan_title')}</h3>
+        <p className="text-xs text-muted-foreground">{t('batch_scan_description')}</p>
 
         <div className="flex gap-2 items-end flex-wrap">
           <div className="flex flex-col gap-1.5 flex-1 min-w-48">
-            <Label htmlFor="xss-scan-host">Host filter (optional)</Label>
+            <Label htmlFor="xss-scan-host">{t('host_filter_label')}</Label>
             <Input
               id="xss-scan-host"
               size="lg"
@@ -113,18 +111,18 @@ export function XssScanPanel({ onOpenInChecker }: XssScanPanelProps) {
               value={scanHost}
               disabled={scanStatus === 'running'}
               onChange={(e) => setScanHost(e.target.value)}
-              placeholder="authorized-target.com"
+              placeholder={t('host_filter_placeholder')}
             />
           </div>
           {scanStatus !== 'running' ? (
             <Button size="lg" onClick={handleScanStart} disabled={scanStarting} className="shrink-0">
               {scanStarting ? <Loader2 className="animate-spin" /> : <Play />}
-              Start scan
+              {t('start_scan_button')}
             </Button>
           ) : (
             <Button size="lg" variant="destructive" onClick={handleScanStop} className="shrink-0">
               <Square />
-              Stop
+              {t('stop_button')}
             </Button>
           )}
         </div>
@@ -134,12 +132,12 @@ export function XssScanPanel({ onOpenInChecker }: XssScanPanelProps) {
             <Badge variant="outline">
               {scanStatus === 'running' && <Loader2 className="size-3 animate-spin" />}
               {scanStatus}
-              {scanTotal !== null && ` · ${scanResults.length}/${scanTotal} done`}
+              {scanTotal !== null && ` · ${t('scan_done_suffix', { done: scanResults.length, total: scanTotal })}`}
             </Badge>
           )}
           {scanResults.length > 0 && (
             <Badge variant="secondary">
-              {scanResults.filter((r) => r.report.summary.vulnerable > 0).length} with signals
+              {t('with_signals_badge', { count: scanResults.filter((r) => r.report.summary.vulnerable > 0).length })}
             </Badge>
           )}
         </div>
@@ -149,19 +147,19 @@ export function XssScanPanel({ onOpenInChecker }: XssScanPanelProps) {
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Results</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('results_title')}</h3>
           {scanResults.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <Switch checked={scanOnlyVulnerable} onCheckedChange={setScanOnlyVulnerable} />
-              Only show findings with signals
+              {t('only_signals_toggle')}
             </label>
           )}
         </div>
         {scanResults.length === 0 ? (
           <EmptyState
             icon={Bug}
-            title="No results yet"
-            description="Optionally set a host filter above and click Start scan."
+            title={t('empty_title')}
+            description={t('empty_description')}
           />
         ) : (
           <div className="flex flex-col gap-2">
@@ -172,7 +170,7 @@ export function XssScanPanel({ onOpenInChecker }: XssScanPanelProps) {
                 <XssScanItemView key={item.history_id} item={item} onTest={handleTest} />
               ))}
             {scanOnlyVulnerable && scanResults.every((r) => r.report.summary.vulnerable === 0) && (
-              <p className="text-xs text-muted-foreground">No findings with signals yet.</p>
+              <p className="text-xs text-muted-foreground">{t('no_signals_yet')}</p>
             )}
           </div>
         )}

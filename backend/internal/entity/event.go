@@ -34,6 +34,10 @@ const (
 	EventSubdomainDone    = "subdomain_done"
 	EventSubdomainStopped = "subdomain_stopped"
 
+	EventDirFinderResult  = "dirfinder_result"
+	EventDirFinderDone    = "dirfinder_done"
+	EventDirFinderStopped = "dirfinder_stopped"
+
 	EventSpiderPage    = "spider_page"
 	EventSpiderDone    = "spider_done"
 	EventSpiderStopped = "spider_stopped"

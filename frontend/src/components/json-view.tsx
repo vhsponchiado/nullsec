@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -6,7 +8,7 @@ function escapeHtml(str: string): string {
 }
 
 // Tokenizes already-escaped JSON text and wraps tokens in colored spans.
-// Never called with un-escaped input — see JsonView below.
+// Never called with un-escaped input; see JsonView below.
 function highlightEscapedJSON(escaped: string): string {
   return escaped.replace(
     /("(?:\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(?:true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
@@ -42,9 +44,15 @@ interface JsonViewProps {
 
 /** Renders `content` as pretty-printed, syntax-highlighted JSON when it
  * parses as JSON; otherwise falls back to plain (safely escaped) text. */
-export function JsonView({ content, emptyLabel = '(empty)', className }: JsonViewProps) {
+export function JsonView({ content, emptyLabel, className }: JsonViewProps) {
+  const { t } = useTranslation('editor-components')
+
   if (!content) {
-    return <div className={`text-xs text-muted-foreground p-2 ${className ?? ''}`}>{emptyLabel}</div>
+    return (
+      <div className={`text-xs text-muted-foreground p-2 ${className ?? ''}`}>
+        {emptyLabel ?? t('json_view_empty')}
+      </div>
+    )
   }
 
   const pretty = tryPrettyJSON(content)

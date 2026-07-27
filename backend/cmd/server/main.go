@@ -20,6 +20,7 @@ import (
 	"nullsec/backend/internal/infra/upstream"
 	"nullsec/backend/internal/infra/wordlist"
 	"nullsec/backend/internal/usecase/certificate"
+	"nullsec/backend/internal/usecase/dirfinder"
 	"nullsec/backend/internal/usecase/intruder"
 	"nullsec/backend/internal/usecase/portscan"
 	"nullsec/backend/internal/usecase/proxy"
@@ -153,6 +154,7 @@ func main() {
 	intruderMgr := intruder.NewManager(hub, upstreamMgr, wordlist.Adapter{})
 	portscanMgr := portscan.NewManager(hub, upstreamMgr)
 	subdomainMgr := subdomain.NewManager(hub, upstreamMgr)
+	dirfinderMgr := dirfinder.NewManager(hub, upstreamMgr)
 	spiderMgr := spider.NewManager(hub, history, upstreamMgr)
 	certificateUC := certificate.New(certAuthority)
 	settingsUC := settings.New(upstreamMgr)
@@ -161,7 +163,7 @@ func main() {
 	sqliscanMgr := sqliscan.NewManager(hub, history)
 
 	apiMux := http.NewServeMux()
-	apiMux.Handle("/api/", httpapi.NewHandler(history, interceptor, responseInterceptor, certificateUC, intruderMgr, portscanMgr, subdomainMgr, spiderMgr, settingsUC, repeaterUC, xssscanMgr, sqliscanMgr))
+	apiMux.Handle("/api/", httpapi.NewHandler(history, interceptor, responseInterceptor, certificateUC, dirfinderMgr, intruderMgr, portscanMgr, subdomainMgr, spiderMgr, settingsUC, repeaterUC, xssscanMgr, sqliscanMgr))
 	apiMux.HandleFunc("/ws", hub.ServeHTTP)
 
 	// STATIC_DIR is unset for local development, where the frontend runs on

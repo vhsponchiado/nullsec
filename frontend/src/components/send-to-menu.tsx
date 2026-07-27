@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -11,14 +12,14 @@ import type { SendTarget, SendableRequest } from '@/lib/types'
 interface SendToMenuProps {
   // A plain object when the caller already has the full request in hand
   // (e.g. Intercept's pending queue); a loader function when it doesn't
-  // (e.g. a Proxy History row, which only holds the lightweight summary —
+  // (e.g. a Proxy History row, which only holds the lightweight summary;
   // headers/body get fetched on demand only if a menu item is actually
   // clicked, instead of eagerly for every row in the table).
   request: SendableRequest | (() => Promise<SendableRequest>)
   onSendTo: (target: SendTarget, req: SendableRequest) => void
   children: ReactNode
   // "Intercept response" resends the request through the proxy to force-
-  // capture a fresh response — that's a deliberate replay for an already-
+  // capture a fresh response: that's a deliberate replay for an already-
   // completed history entry, but nonsensical (and a real duplicate outbound
   // request) for a request that's still sitting unresolved in the Intercept
   // queue, since the original hasn't gone out yet either.
@@ -26,7 +27,7 @@ interface SendToMenuProps {
 }
 
 /** Wraps `children` in a right-click context menu with "send this request
- * to..." shortcuts (Repeater, SQL Injection) — the headers (cookies, auth,
+ * to..." shortcuts (Repeater, SQL Injection); the headers (cookies, auth,
  * etc.) travel with it automatically since they come straight from the
  * captured request. */
 export function SendToMenu({
@@ -35,6 +36,7 @@ export function SendToMenu({
   children,
   allowInterceptResponse = true,
 }: SendToMenuProps) {
+  const { t } = useTranslation('request-components')
   async function send(target: SendTarget) {
     const req = typeof request === 'function' ? await request() : request
     onSendTo(target, req)
@@ -46,24 +48,24 @@ export function SendToMenu({
       <ContextMenuContent>
         <ContextMenuItem onClick={() => send('repeater')}>
           <Send />
-          Send to Repeater
+          {t('send_to_menu_repeater')}
         </ContextMenuItem>
         <ContextMenuItem onClick={() => send('intruder')}>
           <Crosshair />
-          Send to Intruder
+          {t('send_to_menu_intruder')}
         </ContextMenuItem>
         <ContextMenuItem onClick={() => send('sqli-check')}>
           <Syringe />
-          Send to SQL Injection
+          {t('send_to_menu_sqli')}
         </ContextMenuItem>
         <ContextMenuItem onClick={() => send('xss-check')}>
           <Code2 />
-          Send to XSS
+          {t('send_to_menu_xss')}
         </ContextMenuItem>
         {allowInterceptResponse && (
           <ContextMenuItem onClick={() => send('intercept-response')}>
             <Radio />
-            Intercept response
+            {t('send_to_menu_intercept_response')}
           </ContextMenuItem>
         )}
       </ContextMenuContent>

@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "history": "Histórico do Proxy",
+    "intercept": "Interceptação",
+    "repeater": "Repeater",
+    "intruder": "Intruder",
+    "spider": "Spider",
+    "passive-scan": "Scan Passivo",
+    "port-scanner": "Scanner de Portas",
+    "subdomain-finder": "Buscador de Subdomínios",
+    "dir-finder": "Buscador de Diretórios",
+    "wordpress-check": "Verificação WordPress",
+    "sqli-check": "Injeção SQL",
+    "xss-check": "XSS",
+    "decoder": "Decodificador",
+    "certificate": "Certificado",
+    "settings": "Configurações",
+    "about": "Sobre"
+  },
+  "navGroups": {
+    "proxy": "Proxy",
+    "recon": "Reconhecimento",
+    "tools": "Ferramentas",
+    "system": "Sistema"
+  }
+}

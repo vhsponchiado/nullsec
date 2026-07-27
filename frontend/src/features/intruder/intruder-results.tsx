@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Table,
   TableBody,
@@ -39,6 +40,7 @@ export function IntruderResults({
   onSelectRow,
   hasGrep,
 }: IntruderResultsProps) {
+  const { t } = useTranslation('intruder')
   const [sortKey, setSortKey] = useState<SortKey>('index')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
@@ -65,8 +67,8 @@ export function IntruderResults({
     return (
       <EmptyState
         icon={Crosshair}
-        title="No results yet"
-        description="Configure the attack above and click Start attack."
+        title={t('results_empty_title')}
+        description={t('results_empty_description')}
       />
     )
   }
@@ -77,21 +79,21 @@ export function IntruderResults({
         <TableHeader>
           <TableRow>
             <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('index')}>
-              # <ArrowUpDown className="inline size-3" />
+              {t('column_index')} <ArrowUpDown className="inline size-3" />
             </TableHead>
             {positionLabels.map((label, i) => (
               <TableHead key={i}>{label}</TableHead>
             ))}
             <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}>
-              Status <ArrowUpDown className="inline size-3" />
+              {t('column_status')} <ArrowUpDown className="inline size-3" />
             </TableHead>
             <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('length')}>
-              Length <ArrowUpDown className="inline size-3" />
+              {t('column_length')} <ArrowUpDown className="inline size-3" />
             </TableHead>
             <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('duration_ms')}>
-              Time <ArrowUpDown className="inline size-3" />
+              {t('column_time')} <ArrowUpDown className="inline size-3" />
             </TableHead>
-            {hasGrep && <TableHead>Match</TableHead>}
+            {hasGrep && <TableHead>{t('column_match')}</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -109,7 +111,7 @@ export function IntruderResults({
               ))}
               <TableCell>
                 {r.error ? (
-                  <Badge variant="outline">error</Badge>
+                  <Badge variant="outline">{t('error_badge')}</Badge>
                 ) : (
                   <Badge variant={statusVariant(r.status)}>{r.status}</Badge>
                 )}
@@ -133,11 +135,13 @@ interface IntruderResultDetailViewProps {
 }
 
 export function IntruderResultDetailView({ detail, loading }: IntruderResultDetailViewProps) {
+  const { t } = useTranslation('intruder')
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground p-4">
         <Loader2 className="size-4 animate-spin" />
-        Loading…
+        {t('loading')}
       </div>
     )
   }
@@ -146,28 +150,28 @@ export function IntruderResultDetailView({ detail, loading }: IntruderResultDeta
     return (
       <EmptyState
         icon={Crosshair}
-        title="Nothing selected"
-        description="Click a row to see the exact request sent and the response received."
+        title={t('detail_empty_title')}
+        description={t('detail_empty_description')}
       />
     )
   }
 
   if (detail.error) {
-    return <div className="text-sm text-destructive p-4">Error: {detail.error}</div>
+    return <div className="text-sm text-destructive p-4">{t('detail_error_prefix', { error: detail.error })}</div>
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
       <div className="flex flex-col gap-3 min-w-0">
         <h4 className="text-sm font-medium text-muted-foreground">
-          Request ({detail.request_method})
+          {t('detail_request_heading', { method: detail.request_method })}
         </h4>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="intruder-detail-url" className="text-xs">URL</Label>
+          <Label htmlFor="intruder-detail-url" className="text-xs">{t('url_label')}</Label>
           <Textarea id="intruder-detail-url" readOnly className="font-mono text-xs min-h-16 resize-y" value={detail.request_url} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="intruder-detail-headers" className="text-xs">Headers</Label>
+          <Label htmlFor="intruder-detail-headers" className="text-xs">{t('headers_label')}</Label>
           <Textarea
             id="intruder-detail-headers"
             readOnly
@@ -176,13 +180,13 @@ export function IntruderResultDetailView({ detail, loading }: IntruderResultDeta
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="intruder-detail-body" className="text-xs">Body</Label>
+          <Label htmlFor="intruder-detail-body" className="text-xs">{t('body_label')}</Label>
           <Textarea id="intruder-detail-body" readOnly className="font-mono text-xs min-h-24 resize-y" value={detail.request_body} />
         </div>
       </div>
 
       <div className="min-w-0">
-        <h4 className="text-sm font-medium text-muted-foreground mb-3">Response</h4>
+        <h4 className="text-sm font-medium text-muted-foreground mb-3">{t('detail_response_heading')}</h4>
         <ResponseView status={detail.status} headersJSON={detail.response_headers} body={detail.response_body} />
       </div>
     </div>

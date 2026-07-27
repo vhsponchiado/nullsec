@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -44,6 +45,7 @@ interface InterceptProps {
 }
 
 export function Intercept({ onSendTo }: InterceptProps) {
+  const { t } = useTranslation('intercept')
   const [enabled, setEnabled] = useState(false)
   const [requests, setRequests] = useState<PendingRequest[]>([])
   const [responses, setResponses] = useState<PendingResponse[]>([])
@@ -145,16 +147,16 @@ export function Intercept({ onSendTo }: InterceptProps) {
     setRequests([])
     setResponses([])
     await Promise.all([
-      // Empty edit payload — the backend falls back to each pending
+      // Empty edit payload: the backend falls back to each pending
       // request's own original method/url/headers/body when fields are omitted.
       ...requestIds.map((id) =>
         api.forwardIntercepted(id, { method: '', url: '', headers: {}, body: '' }).catch(() => {
-          /* already resolved or failed — ignore, WS will reconcile state */
+          /* already resolved or failed, ignore, WS will reconcile state */
         }),
       ),
       ...responseIds.map((id) =>
         api.forwardInterceptedResponse(id, { status: 0, headers: {}, body: '' }).catch(() => {
-          /* already resolved or failed — ignore, WS will reconcile state */
+          /* already resolved or failed, ignore, WS will reconcile state */
         }),
       ),
     ])
@@ -166,25 +168,27 @@ export function Intercept({ onSendTo }: InterceptProps) {
         <Switch id="intercept-toggle" checked={enabled} onCheckedChange={handleToggle} />
         <Label htmlFor="intercept-toggle" className="text-base flex items-center gap-2">
           <Radio className={`size-4 ${enabled ? 'text-primary' : 'text-muted-foreground'}`} />
-          Intercept {enabled ? 'on' : 'off'}
+          {enabled ? t('intercept_status_on') : t('intercept_status_off')}
         </Label>
-        <Badge variant={items.length > 0 ? 'secondary' : 'outline'}>{items.length} pending</Badge>
+        <Badge variant={items.length > 0 ? 'secondary' : 'outline'}>
+          {t('pending_badge', { count: items.length })}
+        </Badge>
         {items.length > 0 && (
           <Button size="sm" variant="outline" className="ml-auto" onClick={handleForwardAll}>
-            Forward all
+            {t('forward_all')}
           </Button>
         )}
       </div>
 
       <div className="flex gap-4 flex-1 min-h-0">
         <div className="w-72 shrink-0 border rounded-lg overflow-hidden flex flex-col">
-          <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">Pending</div>
+          <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">{t('pending_title')}</div>
           <div className="flex-1 overflow-auto">
             {items.length === 0 && (
               <EmptyState
                 icon={Inbox}
-                title="Nothing held"
-                description="Turn on intercept and browse through the proxy."
+                title={t('empty_pending_title')}
+                description={t('empty_pending_description')}
               />
             )}
             {items.map((item) => {
@@ -204,7 +208,7 @@ export function Intercept({ onSendTo }: InterceptProps) {
 
         <div className="flex-1 min-w-0 border rounded-lg overflow-hidden flex flex-col">
           <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">
-            {selected?.kind === 'response' ? 'Response' : 'Request'}
+            {selected?.kind === 'response' ? t('response_panel_title') : t('request_panel_title')}
           </div>
           <div className="flex-1 overflow-auto p-4">
             <AnimatePresence mode="wait" initial={false}>
@@ -220,10 +224,10 @@ export function Intercept({ onSendTo }: InterceptProps) {
                   <RequestEditor value={requestValue} onChange={setRequestValue} />
                   <div className="flex gap-3">
                     <Button size="lg" onClick={handleForward}>
-                      Forward
+                      {t('forward')}
                     </Button>
                     <Button size="lg" variant="outline" onClick={handleDrop}>
-                      Drop
+                      {t('drop')}
                     </Button>
                   </div>
                 </motion.div>
@@ -259,8 +263,8 @@ export function Intercept({ onSendTo }: InterceptProps) {
                 >
                   <EmptyState
                     icon={MousePointerClick}
-                    title="Nothing selected"
-                    description="Select a pending item to edit and release."
+                    title={t('empty_selected_title')}
+                    description={t('empty_selected_description')}
                   />
                 </motion.div>
               )}
@@ -283,6 +287,7 @@ function InterceptItemRow({
   onSelect: () => void
   onSendTo: (target: SendTarget, req: SendableRequest) => void
 }) {
+  const { t } = useTranslation('intercept')
   const row = (
     <button
       onClick={onSelect}
@@ -292,7 +297,7 @@ function InterceptItemRow({
     >
       <div className="flex items-center gap-2">
         <Badge variant={item.kind === 'response' ? 'secondary' : 'outline'}>
-          {item.kind === 'response' ? 'Response' : 'Request'}
+          {item.kind === 'response' ? t('badge_response') : t('badge_request')}
         </Badge>
         <span className="font-mono text-sm font-medium">
           {item.kind === 'request' ? item.data.method : item.data.request_method}

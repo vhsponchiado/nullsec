@@ -1,0 +1,9 @@
+{
+  "project_title": "Nullsec Proxy",
+  "project_description": "A Burp Suite-style HTTP/HTTPS intercepting proxy: its own MITM CA, request/response history, and a growing set of recon and scanning tools, built as a personal pentesting toolkit.",
+  "credits_title": "Credits",
+  "credits_description": "Developed and maintained by:",
+  "developer_name": "Vinicius Henrique Sponchiado",
+  "private_title": "Private project",
+  "private_description": "Not open source. Built for personal use in authorized pentest engagements only."
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { WandSparkles } from 'lucide-react'
@@ -13,12 +14,13 @@ interface JsonEditorProps {
 }
 
 /** An editable text area that shows syntax-highlighted, pretty-printed JSON
- * at rest and swaps to a plain editable textarea on click — full syntax
- * coloring while typing would need a real code-editor component, so this is
+ * at rest and swaps to a plain editable textarea on click (full syntax
+ * coloring while typing would need a real code-editor component), so this is
  * the "click to edit, highlighted when idle" middle ground. Includes a
  * one-click Format button that re-indents the current value if it parses as
  * JSON. */
 export function JsonEditor({ id, value, onChange, minHeightClass = 'min-h-32', readOnly }: JsonEditorProps) {
+  const { t } = useTranslation('editor-components')
   const [editing, setEditing] = useState(false)
 
   if (readOnly) {
@@ -52,8 +54,8 @@ export function JsonEditor({ id, value, onChange, minHeightClass = 'min-h-32', r
           className="absolute top-1.5 right-1.5 text-muted-foreground"
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleFormat}
-          aria-label="Format JSON"
-          title="Format JSON"
+          aria-label={t('json_editor_format_json')}
+          title={t('json_editor_format_json')}
         >
           <WandSparkles />
         </Button>
@@ -66,7 +68,7 @@ export function JsonEditor({ id, value, onChange, minHeightClass = 'min-h-32', r
       onClick={() => setEditing(true)}
       className={`rounded-lg border border-input overflow-auto cursor-text ${minHeightClass}`}
     >
-      <JsonView content={value} emptyLabel="Click to edit..." />
+      <JsonView content={value} emptyLabel={t('json_editor_click_to_edit')} />
     </div>
   )
 }

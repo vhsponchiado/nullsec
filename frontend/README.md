@@ -52,4 +52,3 @@ npm run lint                            # oxlint
 npm run build                           # production build
 ```
 
-See [../CONTRIBUTING.md](../CONTRIBUTING.md) for the full contribution guide.

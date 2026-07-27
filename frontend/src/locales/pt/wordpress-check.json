@@ -1,0 +1,12 @@
+{
+  "url_placeholder": "https://authorized-target.com",
+  "scan_button": "Varrer",
+  "disclaimer": "Faz apenas requisições GET somente leitura (fingerprinting) contra endpoints conhecidos do WordPress. Use somente em alvos que você está autorizado a testar.",
+  "checked_count": "{{count}} verificados",
+  "found_count": "{{count}} encontrados",
+  "critical_count": "{{count}} críticos",
+  "status_error": "erro",
+  "status_na": "n/d",
+  "found_badge": "Encontrado",
+  "not_found_badge": "Não encontrado"
+}

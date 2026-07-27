@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -19,11 +20,7 @@ import { useClipboardCopy } from '@/lib/use-clipboard-copy'
 import { detectParams } from '@/lib/detect-params'
 import type { RepeaterResponse, SqliPayload } from '@/lib/types'
 
-const TYPE_LABEL: Record<string, string> = {
-  error: 'Error-based',
-  boolean: 'Boolean-based',
-  time: 'Time-based',
-}
+const code = <code />
 
 interface SqliManualPanelProps {
   method: string
@@ -33,9 +30,10 @@ interface SqliManualPanelProps {
 }
 
 /** SQLi's "Manual" mode: pick a detected parameter, pick (or write) a
- * payload, and send it through the Repeater path — full control over
+ * payload, and send it through the Repeater path: full control over
  * exactly one request at a time, as a follow-up to what Automatic found. */
 export function SqliManualPanel({ method, url, body, headerRows }: SqliManualPanelProps) {
+  const { t } = useTranslation('sqli-check')
   const [payloads, setPayloads] = useState<SqliPayload[]>([])
   const { copiedValue, copy } = useClipboardCopy<string>()
   const [manualParam, setManualParam] = useState<string | null>(null)
@@ -95,19 +93,18 @@ export function SqliManualPanel({ method, url, body, headerRows }: SqliManualPan
   return (
     <>
       <div className="flex flex-col gap-4 border rounded-lg p-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Manual injection</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{t('manual_injection_title')}</h3>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="sqli-manual-param">Parameter to inject</Label>
+          <Label htmlFor="sqli-manual-param">{t('manual_param_label')}</Label>
           {params.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              No parameters detected yet — add <code>?name=value</code> to the URL or fill in the
-              Body.
+              <Trans i18nKey="manual_no_params_body" ns="sqli-check" components={[code]} />
             </p>
           ) : (
             <Select value={manualParam ?? undefined} onValueChange={setManualParam}>
               <SelectTrigger id="sqli-manual-param" size="lg" className="w-full">
-                <SelectValue placeholder="Choose a parameter" />
+                <SelectValue placeholder={t('manual_param_placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 {params.map((p) => (
@@ -122,14 +119,14 @@ export function SqliManualPanel({ method, url, body, headerRows }: SqliManualPan
 
         <div className="flex gap-2 items-end">
           <div className="flex flex-col gap-1.5 flex-1">
-            <Label htmlFor="sqli-manual-payload">Payload (pick from the wordlist below or edit freely)</Label>
+            <Label htmlFor="sqli-manual-payload">{t('manual_payload_label')}</Label>
             <Input
               id="sqli-manual-payload"
               size="lg"
               className="font-mono"
               value={manualPayload}
               onChange={(e) => setManualPayload(e.target.value)}
-              placeholder="' OR 1=1--"
+              placeholder={t('manual_payload_placeholder')}
             />
           </div>
           <Button
@@ -139,7 +136,7 @@ export function SqliManualPanel({ method, url, body, headerRows }: SqliManualPan
             disabled={manualSending || !manualParam || !manualPayload}
           >
             {manualSending && <Loader2 className="animate-spin" />}
-            Send
+            {t('send')}
           </Button>
         </div>
       </div>
@@ -160,16 +157,16 @@ export function SqliManualPanel({ method, url, body, headerRows }: SqliManualPan
 
       <div className="border rounded-lg min-w-0">
         <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium rounded-t-lg">
-          Wordlist ({payloads.length} payloads)
+          {t('wordlist_title', { count: payloads.length })}
         </div>
         <div className="divide-y max-h-96 overflow-auto">
           {payloads.length === 0 && (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Loading...</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">{t('loading')}</div>
           )}
           {groupBy(payloads, (p) => p.type).map(([type, list]) => (
             <div key={type}>
               <div className="px-4 py-1.5 text-xs font-medium text-muted-foreground bg-muted/20">
-                {TYPE_LABEL[type] ?? type}
+                {t(`payload_type_${type}`, { defaultValue: type })}
               </div>
               {list.map((p) => (
                 <div
@@ -188,12 +185,12 @@ export function SqliManualPanel({ method, url, body, headerRows }: SqliManualPan
                     {copiedValue === p.value ? (
                       <>
                         <Check className="text-success" />
-                        Copied
+                        {t('copied')}
                       </>
                     ) : (
                       <>
                         <Copy />
-                        Use
+                        {t('use')}
                       </>
                     )}
                   </Button>

@@ -7,12 +7,16 @@ Current state: HTTP/HTTPS MITM proxy with its own CA, Intercept (requests
 and responses), history, and Repeater are all working, alongside a growing
 set of recon and scanning tools — Intruder (sniper/battering ram/pitchfork/
 cluster bomb), Spider, Passive Scan, Port Scanner, Subdomain Finder,
-WordPress Check, SQL Injection and XSS scanners, a Burp-style Decoder, and
-an upstream-proxy setting (SOCKS5/HTTP) so any of the above can be routed
-through infrastructure you're authorized to use.
+Directory Finder, WordPress Check, SQL Injection and XSS scanners, a
+Burp-style Decoder, and an upstream-proxy setting (SOCKS5/HTTP) so any of
+the above can be routed through infrastructure you're authorized to use.
 
-Licensed under [Apache-2.0](LICENSE). Contributions welcome — see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Private project — for personal/internal use in authorized pentest engagements
+only. All rights reserved.
+
+## Author
+
+Developed and maintained by **Vinicius Henrique Sponchiado**.
 
 ## Running locally
 
@@ -240,5 +244,19 @@ a `checksums.txt` `install.sh` verifies against before installing.
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for local dev setup, the checks CI
-runs, and the conventions for adding a new scanner tool.
+Checks CI runs, for reference:
+
+```bash
+# Backend
+cd backend
+gofmt -l .              # must print nothing
+go vet ./...
+go test ./...
+golangci-lint run       # see .golangci.yml
+
+# Frontend
+cd frontend
+npx tsc --noEmit -p tsconfig.app.json
+npx oxlint src
+npm run build
+```

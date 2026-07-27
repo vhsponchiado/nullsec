@@ -1,0 +1,18 @@
+{
+  "headers_editor_header_placeholder": "Cabeçalho",
+  "headers_editor_value_placeholder": "Valor",
+  "headers_editor_remove_header": "Remover cabeçalho",
+  "headers_editor_add_header": "Adicionar cabeçalho",
+  "headers_editor_browser_headers": "Cabeçalhos de navegador",
+  "headers_editor_browser_headers_title": "Preenche User-Agent, Accept e Accept-Language como um navegador real enviaria: ajuda a contornar regras de WAF que bloqueiam o User-Agent padrão do Go",
+  "json_editor_format_json": "Formatar JSON",
+  "json_editor_click_to_edit": "Clique para editar...",
+  "json_view_empty": "(vazio)",
+  "key_value_table_key": "Chave",
+  "key_value_table_value": "Valor",
+  "mark_button_title": "Marcar seleção como posição de payload (§…§)",
+  "mark_button_aria_label": "Marcar seleção como posição de payload",
+  "response_editor_status": "Status",
+  "response_editor_headers": "Cabeçalhos",
+  "response_editor_body": "Corpo"
+}

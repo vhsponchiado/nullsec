@@ -1,0 +1,12 @@
+{
+  "regenerate_confirm": "Regenerar a CA invalida todos os certificados emitidos até agora. Sites HTTPS já visitados vão precisar de um novo handshake. Continuar?",
+  "ca_title": "CA do Nullsec",
+  "ca_description": "Certificado raiz usado para interceptar tráfego HTTPS. Instale-o no navegador ou sistema que você vai usar para os testes, assim é possível navegar sem avisos de certificado.",
+  "download_certificate": "Baixar certificado",
+  "regenerate_ca": "Regenerar CA",
+  "auto_install_title": "Instalação automática",
+  "auto_install_description": "Pela linha de comando do backend, usando a mesma <0>{{pkg}}</0> que o Hetty usa:",
+  "auto_install_note": "Instala no armazenamento de confiança do sistema (pode pedir sua senha). Para desfazer, use <0>cert uninstall</0>.",
+  "no_install_title": "Alternativa sem instalação",
+  "no_install_description": "Abre um perfil descartável do Chrome já configurado com o proxy, ignorando avisos de certificado: a mesma técnica que o Burp Suite e o Hetty (<0>--chrome</0>) usam. Nada é salvo entre execuções, e seu perfil real do Chrome nunca é tocado."
+}

@@ -4,17 +4,17 @@ import { insertSorted } from './sorted-append'
 /**
  * Keeps a live-streaming list (scan/attack results arriving one at a time
  * over the WebSocket) sorted by `compare`, without re-sorting the whole
- * array on every single new arrival — that's what the naive
+ * array on every single new arrival: that's what the naive
  * `[...results].sort(...)` in a `useMemo` keyed on `results` does, and it
  * turns an N-result run into O(N² log N) of total sorting work by the time
  * it finishes, visibly stalling the UI as N grows into the thousands.
  *
  * Instead, each newly-appended item is inserted directly at its correct
  * position via binary search. A full sort only happens when `compare`
- * itself changes (the user picked a different column/direction — pass a
+ * itself changes (the user picked a different column/direction; pass a
  * `useCallback`'d comparator so this is detected correctly), or when
  * `items` wasn't a pure append since the last render (some callers derive
- * `items` via a filter — e.g. Subdomain Finder's "show unresolved" toggle —
+ * `items` via a filter, e.g. Subdomain Finder's "show unresolved" toggle,
  * which can insert/remove items anywhere, not just at the tail; a plain
  * length check wouldn't catch that, so this checks that every
  * previously-seen item is still at the same index).

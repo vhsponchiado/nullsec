@@ -1,0 +1,22 @@
+{
+  "request_editor_method": "Método",
+  "request_editor_url": "URL",
+  "request_editor_headers": "Cabeçalhos",
+  "request_editor_body": "Corpo",
+  "response_view_status": "Status",
+  "response_view_status_na": "N/D",
+  "response_view_headers": "Cabeçalhos",
+  "response_view_body": "Corpo",
+  "response_view_download_txt": "Baixar .txt",
+  "send_to_menu_repeater": "Enviar ao Repeater",
+  "send_to_menu_intruder": "Enviar ao Intruder",
+  "send_to_menu_sqli": "Enviar ao SQL Injection",
+  "send_to_menu_xss": "Enviar ao XSS",
+  "send_to_menu_intercept_response": "Interceptar resposta",
+  "status_dot_na": "n/d",
+  "target_request_form_title": "Requisição alvo",
+  "target_request_form_method": "Método",
+  "target_request_form_url_label": "URL (com os parâmetros de consulta que você quer testar)",
+  "target_request_form_body_label": "Corpo (form-urlencoded, opcional, ex.: {{example}})",
+  "target_request_form_headers_label": "Cabeçalhos (opcional, ex.: Authorization, Cookie, etc.)"
+}

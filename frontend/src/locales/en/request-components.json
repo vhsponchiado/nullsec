@@ -1,0 +1,22 @@
+{
+  "request_editor_method": "Method",
+  "request_editor_url": "URL",
+  "request_editor_headers": "Headers",
+  "request_editor_body": "Body",
+  "response_view_status": "Status",
+  "response_view_status_na": "N/A",
+  "response_view_headers": "Headers",
+  "response_view_body": "Body",
+  "response_view_download_txt": "Download .txt",
+  "send_to_menu_repeater": "Send to Repeater",
+  "send_to_menu_intruder": "Send to Intruder",
+  "send_to_menu_sqli": "Send to SQL Injection",
+  "send_to_menu_xss": "Send to XSS",
+  "send_to_menu_intercept_response": "Intercept response",
+  "status_dot_na": "n/a",
+  "target_request_form_title": "Target request",
+  "target_request_form_method": "Method",
+  "target_request_form_url_label": "URL (with the query parameters you want to test)",
+  "target_request_form_body_label": "Body (form-urlencoded, optional, e.g. {{example}})",
+  "target_request_form_headers_label": "Headers (optional, e.g. Authorization, Cookie, etc.)"
+}

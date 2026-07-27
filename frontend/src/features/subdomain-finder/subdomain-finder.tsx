@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -32,23 +33,23 @@ import type {
 } from '@/lib/types'
 import { SubdomainFinderGuide } from './subdomain-finder-guide'
 
-const SOURCE_LABEL: Record<string, string> = {
-  root: 'root',
-  crtsh: 'crt.sh',
-  bruteforce: 'brute-force',
-}
-
 type SortKey = 'subdomain' | 'duration_ms'
 
 type ScanSpeed = 'fast' | 'normal' | 'cautious'
 
-const SPEED_PRESETS: Record<ScanSpeed, { label: string; concurrency: number; timeoutMs: number }> = {
-  fast: { label: 'Fast', concurrency: 100, timeoutMs: 2000 },
-  normal: { label: 'Normal', concurrency: 50, timeoutMs: 3000 },
-  cautious: { label: 'Cautious', concurrency: 10, timeoutMs: 5000 },
+const SPEED_PRESETS: Record<ScanSpeed, { concurrency: number; timeoutMs: number }> = {
+  fast: { concurrency: 100, timeoutMs: 2000 },
+  normal: { concurrency: 50, timeoutMs: 3000 },
+  cautious: { concurrency: 10, timeoutMs: 5000 },
 }
 
 export function SubdomainFinder() {
+  const { t } = useTranslation('subdomain-finder')
+  const SOURCE_LABEL: Record<string, string> = {
+    root: t('source_root'),
+    crtsh: t('source_crtsh'),
+    bruteforce: t('source_bruteforce'),
+  }
   const [domain, setDomain] = useState('')
   const [useCRTSH, setUseCRTSH] = useState(true)
   const [wordlistSize, setWordlistSize] = useState('1000')
@@ -98,11 +99,11 @@ export function SubdomainFinder() {
 
   async function handleStart() {
     if (!domain.trim()) {
-      setStartError('Domain is required.')
+      setStartError(t('domain_required'))
       return
     }
     if (!useCRTSH && wordlistSize === '0') {
-      setStartError('Enable crt.sh, DNS brute-force, or both.')
+      setStartError(t('crtsh_or_bruteforce_required'))
       return
     }
 
@@ -146,7 +147,7 @@ export function SubdomainFinder() {
     try {
       await api.stopSubdomainScan(scanId)
     } catch {
-      // the scan may have already finished server-side — nothing to do
+      // the scan may have already finished server-side, so there is nothing to do
     }
   }
 
@@ -180,11 +181,11 @@ export function SubdomainFinder() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-w-0">
       <div className="min-w-0 flex flex-col gap-6 overflow-auto pr-1">
         <div className="flex flex-col gap-4 border rounded-lg p-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Target</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('target_section_title')}</h3>
 
           <div className="flex gap-2 items-end flex-wrap">
             <div className="flex flex-col gap-1.5 flex-1 min-w-48">
-              <Label htmlFor="subdomain-domain">Domain</Label>
+              <Label htmlFor="subdomain-domain">{t('domain_label')}</Label>
               <Input
                 id="subdomain-domain"
                 size="lg"
@@ -192,18 +193,18 @@ export function SubdomainFinder() {
                 value={domain}
                 disabled={running}
                 onChange={(e) => setDomain(e.target.value)}
-                placeholder="example.com"
+                placeholder={t('domain_placeholder')}
               />
             </div>
             {!running ? (
               <Button size="lg" onClick={handleStart} disabled={starting} className="shrink-0">
                 {starting ? <Loader2 className="animate-spin" /> : <Play />}
-                Start scan
+                {t('start_scan')}
               </Button>
             ) : (
               <Button size="lg" variant="destructive" onClick={handleStop} className="shrink-0">
                 <Square />
-                Stop
+                {t('stop')}
               </Button>
             )}
           </div>
@@ -211,26 +212,26 @@ export function SubdomainFinder() {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <Switch id="subdomain-use-crtsh" checked={useCRTSH} onCheckedChange={setUseCRTSH} disabled={running} />
-              <Label htmlFor="subdomain-use-crtsh" className="text-sm">crt.sh (passive)</Label>
+              <Label htmlFor="subdomain-use-crtsh" className="text-sm">{t('crtsh_label')}</Label>
             </div>
             <div className="flex items-center gap-2">
-              <Label htmlFor="subdomain-wordlist-size" className="text-sm text-muted-foreground">DNS brute-force</Label>
+              <Label htmlFor="subdomain-wordlist-size" className="text-sm text-muted-foreground">{t('dns_bruteforce_label')}</Label>
               <Select value={wordlistSize} onValueChange={setWordlistSize} disabled={running}>
                 <SelectTrigger id="subdomain-wordlist-size" size="lg" className="w-56">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Off</SelectItem>
-                  <SelectItem value="100">Top 100 prefixes</SelectItem>
-                  <SelectItem value="1000">Top 1000 prefixes</SelectItem>
+                  <SelectItem value="0">{t('wordlist_off')}</SelectItem>
+                  <SelectItem value="100">{t('wordlist_top_100')}</SelectItem>
+                  <SelectItem value="1000">{t('wordlist_top_1000')}</SelectItem>
                   <SelectItem value={String(wordlistTotal)}>
-                    Top {wordlistTotal} prefixes (full)
+                    {t('wordlist_full', { count: wordlistTotal })}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              <Label htmlFor="subdomain-speed" className="text-sm text-muted-foreground">Speed</Label>
+              <Label htmlFor="subdomain-speed" className="text-sm text-muted-foreground">{t('speed_label')}</Label>
               <Select value={speed} onValueChange={(v) => setSpeed(v as ScanSpeed)} disabled={running}>
                 <SelectTrigger id="subdomain-speed" size="lg" className="w-32">
                   <SelectValue />
@@ -238,7 +239,7 @@ export function SubdomainFinder() {
                 <SelectContent>
                   {(Object.keys(SPEED_PRESETS) as ScanSpeed[]).map((s) => (
                     <SelectItem key={s} value={s}>
-                      {SPEED_PRESETS[s].label}
+                      {t(`speed_${s}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -247,9 +248,9 @@ export function SubdomainFinder() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            {speed === 'fast' && 'High concurrency, short DNS timeout — quickest, may miss slow-to-resolve names.'}
-            {speed === 'normal' && 'Balanced default — good for most domains.'}
-            {speed === 'cautious' && 'Low concurrency, longer DNS timeout — gentler on the nameservers.'}
+            {speed === 'fast' && t('speed_hint_fast')}
+            {speed === 'normal' && t('speed_hint_normal')}
+            {speed === 'cautious' && t('speed_hint_cautious')}
           </p>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -257,18 +258,18 @@ export function SubdomainFinder() {
               <Badge variant="outline">
                 {status === 'running' && <Loader2 className="size-3 animate-spin" />}
                 {status}
-                {total !== null && ` · ${results.length}${total ? `/${total}` : ''} checked`}
+                {total !== null && ` · ${results.length}${total ? `/${total}` : ''} ${t('checked_suffix')}`}
               </Badge>
             )}
             {results.length > 0 && (
               <Badge className="bg-success/15 text-success border-success/30" variant="outline">
-                {foundCount} found
+                {foundCount} {t('found_suffix')}
               </Badge>
             )}
             {results.length > 0 && (
               <div className="flex items-center gap-2 ml-auto">
                 <Switch id="subdomain-show-unresolved" checked={showUnresolved} onCheckedChange={setShowUnresolved} />
-                <Label htmlFor="subdomain-show-unresolved" className="text-xs text-muted-foreground">Show unresolved attempts</Label>
+                <Label htmlFor="subdomain-show-unresolved" className="text-xs text-muted-foreground">{t('show_unresolved')}</Label>
               </div>
             )}
           </div>
@@ -278,12 +279,12 @@ export function SubdomainFinder() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-muted-foreground">Results</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('results_title')}</h3>
           {sorted.length === 0 ? (
             <EmptyState
               icon={Globe}
-              title="No results yet"
-              description="Enter a domain above and click Start scan."
+              title={t('empty_title')}
+              description={t('empty_description')}
             />
           ) : (
             <div className="border rounded-lg overflow-auto max-h-[32rem]">
@@ -291,13 +292,13 @@ export function SubdomainFinder() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('subdomain')}>
-                      Subdomain <ArrowUpDown className="inline size-3" />
+                      {t('column_subdomain')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
-                    <TableHead>Resolved</TableHead>
-                    <TableHead>IP(s)</TableHead>
-                    <TableHead>Source</TableHead>
+                    <TableHead>{t('column_resolved')}</TableHead>
+                    <TableHead>{t('column_ips')}</TableHead>
+                    <TableHead>{t('column_source')}</TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('duration_ms')}>
-                      Time <ArrowUpDown className="inline size-3" />
+                      {t('column_time')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -308,10 +309,10 @@ export function SubdomainFinder() {
                       <TableCell>
                         {r.resolved ? (
                           <Badge className="bg-success/15 text-success border-success/30" variant="outline">
-                            yes
+                            {t('badge_yes')}
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">no</Badge>
+                          <Badge variant="secondary">{t('badge_no')}</Badge>
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs max-w-48 truncate">

@@ -1,0 +1,22 @@
+{
+  "upstream_proxy_title": "Proxy de saída",
+  "type_direct": "Nenhum (direto)",
+  "type_socks5": "SOCKS5",
+  "type_http": "Proxy HTTP(S)",
+  "badge_direct": "Direto",
+  "upstream_description": "Roteia o tráfego de saída do Repeater, Intruder, Port Scanner e da consulta ao crt.sh do Subdomain Finder através de um proxy que você controla (um listener SOCKS local de Tor/VPN, ou um proxy de encaminhamento HTTP(S), ex.: uma jump box fornecida pelo cliente), em vez de conectar diretamente aos alvos a partir desta máquina.",
+  "loading": "Carregando…",
+  "type_label": "Tipo",
+  "address_label": "Endereço",
+  "address_placeholder_socks5": "127.0.0.1:9050",
+  "address_placeholder_http": "proxy.example.com:8080",
+  "username_label": "Usuário (opcional)",
+  "password_label": "Senha (opcional)",
+  "save": "Salvar",
+  "saved": "Salvo",
+  "explainer_title": "O que isso faz e o que não faz",
+  "explainer_p1": "Uma vez configurado, toda requisição enviada pelo Repeater e pelo Intruder, cada porta testada pelo Port Scanner e a consulta ao crt.sh do Subdomain Finder passam a sair por esse proxy, em vez de sair diretamente desta máquina.",
+  "explainer_p2_bold": "DNS é a exceção",
+  "explainer_p2_rest": ": a etapa de brute-force do Subdomain Finder resolve nomes usando o resolvedor do sistema diretamente; o proxy SOCKS5/HTTP não cobre DNS da mesma forma.",
+  "explainer_note": "Isso muda de qual IP o seu tráfego se origina; não muda se usar essas ferramentas contra um determinado alvo é autorizado. Só roteie tráfego de engajamento por infraestrutura que você tem permissão para usar."
+}

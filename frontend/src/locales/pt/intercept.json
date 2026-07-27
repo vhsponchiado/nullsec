@@ -1,0 +1,18 @@
+{
+  "intercept_status_on": "Interceptação ativada",
+  "intercept_status_off": "Interceptação desativada",
+  "pending_badge_one": "{{count}} pendente",
+  "pending_badge_other": "{{count}} pendentes",
+  "forward_all": "Encaminhar tudo",
+  "pending_title": "Pendentes",
+  "empty_pending_title": "Nada retido",
+  "empty_pending_description": "Ative a interceptação e navegue através do proxy.",
+  "response_panel_title": "Resposta",
+  "request_panel_title": "Requisição",
+  "forward": "Encaminhar",
+  "drop": "Descartar",
+  "empty_selected_title": "Nada selecionado",
+  "empty_selected_description": "Selecione um item pendente para editar e liberar.",
+  "badge_response": "Resposta",
+  "badge_request": "Requisição"
+}

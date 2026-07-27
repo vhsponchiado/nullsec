@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -15,10 +16,11 @@ interface ResponseEditorProps {
 }
 
 export function ResponseEditor({ value, onChange }: ResponseEditorProps) {
+  const { t } = useTranslation('editor-components')
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5 w-32">
-        <Label htmlFor="resp-status">Status</Label>
+        <Label htmlFor="resp-status">{t('response_editor_status')}</Label>
         <Input
           id="resp-status"
           type="number"
@@ -29,7 +31,7 @@ export function ResponseEditor({ value, onChange }: ResponseEditorProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="resp-edit-headers">Headers</Label>
+        <Label htmlFor="resp-edit-headers">{t('response_editor_headers')}</Label>
         <Textarea
           id="resp-edit-headers"
           className="font-mono text-sm min-h-32 resize-y"
@@ -39,7 +41,7 @@ export function ResponseEditor({ value, onChange }: ResponseEditorProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="resp-edit-body">Body</Label>
+        <Label htmlFor="resp-edit-body">{t('response_editor_body')}</Label>
         <JsonEditor
           id="resp-edit-body"
           minHeightClass="min-h-48"

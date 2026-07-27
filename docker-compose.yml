@@ -45,11 +45,11 @@ services:
   # together, no separate DB service needed) purpose-built as an attack
   # target for learning/practicing. Only ever point nullsec at this, never
   # a real target, while getting familiar with a new attack.
-  dvwa:
-    image: vulnerables/web-dvwa
-    ports:
-      - "8888:80"
-    restart: unless-stopped
+  #dvwa:
+    #image: vulnerables/web-dvwa
+    #ports:
+      #- "8888:80"
+    #restart: unless-stopped
 
 volumes:
   nullsec-data:

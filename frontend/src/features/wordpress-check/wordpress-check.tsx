@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +15,7 @@ const SEVERITY_ICON: Record<WPCheckSeverity, React.ReactNode> = {
 }
 
 export function WordPressCheck() {
+  const { t } = useTranslation('wordpress-check')
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [report, setReport] = useState<WordPressCheckReport | null>(null)
@@ -41,18 +43,17 @@ export function WordPressCheck() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-          placeholder="https://authorized-target.com"
+          placeholder={t('url_placeholder')}
           className="font-mono flex-1 min-w-48"
         />
         <Button size="lg" onClick={handleScan} disabled={loading}>
           {loading && <Loader2 className="animate-spin" />}
-          Scan
+          {t('scan_button')}
         </Button>
       </div>
 
       <p className="text-xs text-muted-foreground max-w-2xl">
-        Only makes read-only GET requests (fingerprinting) against known WordPress endpoints. Use
-        only on targets you're authorized to test.
+        {t('disclaimer')}
       </p>
 
       {error && <div className="text-sm text-destructive">{error}</div>}
@@ -60,11 +61,11 @@ export function WordPressCheck() {
       {report && (
         <div className="flex-1 min-h-0 overflow-auto flex flex-col gap-5 pr-1">
           <div className="flex gap-2 items-center flex-wrap">
-            <Badge variant="secondary">{report.summary.checked} checked</Badge>
-            <Badge variant="secondary">{report.summary.found} found</Badge>
+            <Badge variant="secondary">{t('checked_count', { count: report.summary.checked })}</Badge>
+            <Badge variant="secondary">{t('found_count', { count: report.summary.found })}</Badge>
             {report.summary.critical > 0 && (
               <Badge variant="outline" className="border-destructive text-destructive">
-                {report.summary.critical} critical
+                {t('critical_count', { count: report.summary.critical })}
               </Badge>
             )}
           </div>
@@ -86,7 +87,7 @@ export function WordPressCheck() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-xs font-medium break-all">{r.path}</span>
                         <span className="font-mono text-xs text-muted-foreground">
-                          {r.error ? 'error' : r.status || '—'}
+                          {r.error ? t('status_error') : r.status || t('status_na')}
                         </span>
                         {r.found ? (
                           <Badge
@@ -95,10 +96,10 @@ export function WordPressCheck() {
                               r.severity === 'critical' ? 'border-destructive text-destructive' : ''
                             }
                           >
-                            Found
+                            {t('found_badge')}
                           </Badge>
                         ) : (
-                          <Badge variant="outline">Not found</Badge>
+                          <Badge variant="outline">{t('not_found_badge')}</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground break-words">

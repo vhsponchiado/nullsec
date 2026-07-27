@@ -1,0 +1,12 @@
+{
+  "regenerate_confirm": "Regenerating the CA invalidates every certificate issued so far. Already-visited HTTPS sites will need a fresh handshake. Continue?",
+  "ca_title": "Nullsec CA",
+  "ca_description": "Root certificate used to intercept HTTPS traffic. Install it in the browser or system you'll use for testing so you can browse without certificate warnings.",
+  "download_certificate": "Download certificate",
+  "regenerate_ca": "Regenerate CA",
+  "auto_install_title": "Automatic install",
+  "auto_install_description": "Via the backend's command line, using the same <0>{{pkg}}</0> Hetty uses:",
+  "auto_install_note": "Installs into the system trust store (may prompt for your password). To undo it, use <0>cert uninstall</0>.",
+  "no_install_title": "No-install alternative",
+  "no_install_description": "Opens a throwaway Chrome profile already configured with the proxy, ignoring certificate warnings: the same technique Burp Suite and Hetty (<0>--chrome</0>) use. Nothing is saved between runs, and your real Chrome profile is never touched."
+}

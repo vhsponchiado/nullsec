@@ -1,6 +1,9 @@
 import type {
   DecodeOperation,
   DecodeSmartStep,
+  DirFinderSnapshot,
+  DirFinderStartRequest,
+  DirFinderStartResponse,
   EditedRequest,
   EditedResponse,
   Headers,
@@ -258,6 +261,25 @@ export const api = {
 
   getSubdomainScan(id: string): Promise<SubdomainSnapshot> {
     return request(`/api/tools/subdomain/${id}`)
+  },
+
+  dirfinderWordlistSize(): Promise<{ size: number }> {
+    return request('/api/tools/dirfinder/wordlist-size')
+  },
+
+  startDirFinderScan(req: DirFinderStartRequest): Promise<DirFinderStartResponse> {
+    return request('/api/tools/dirfinder/start', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    })
+  },
+
+  stopDirFinderScan(id: string): Promise<{ status: string }> {
+    return request(`/api/tools/dirfinder/${id}/stop`, { method: 'POST' })
+  },
+
+  getDirFinderScan(id: string): Promise<DirFinderSnapshot> {
+    return request(`/api/tools/dirfinder/${id}`)
   },
 
   getUpstreamProxy(): Promise<UpstreamProxyConfig> {

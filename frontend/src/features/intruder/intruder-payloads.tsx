@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,7 +19,7 @@ export type PayloadSource = 'simple' | 'wordlist' | 'numbers'
 
 /** Which built-in list to draw from when source === 'wordlist'. The
  * credential-* pair select the username/password half of the same
- * username:password list, in matching order — pick one for each of two
+ * username:password list, in matching order: pick one for each of two
  * marked positions and run a Pitchfork attack to test the real pairs,
  * instead of Cluster bomb's every-combination behavior. */
 export type BuiltinWordlist =
@@ -54,17 +55,20 @@ export const DEFAULT_PAYLOAD_SET_CONFIG: PayloadSetConfig = {
   zeroPad: false,
 }
 
-const SOURCE_LABELS: Record<PayloadSource, string> = {
-  simple: 'Custom list (paste or upload .txt)',
-  wordlist: 'Built-in wordlist',
-  numbers: 'Number range',
-}
+const SOURCES: PayloadSource[] = ['simple', 'wordlist', 'numbers']
 
-const WORDLIST_LABELS: Record<BuiltinWordlist, string> = {
-  passwords: 'Passwords',
-  usernames: 'Usernames',
-  'credential-usernames': 'Credentials — usernames',
-  'credential-passwords': 'Credentials — passwords',
+const WORDLISTS_ORDER: BuiltinWordlist[] = [
+  'passwords',
+  'usernames',
+  'credential-usernames',
+  'credential-passwords',
+]
+
+const WORDLIST_KEY: Record<BuiltinWordlist, string> = {
+  passwords: 'wordlist_passwords',
+  usernames: 'wordlist_usernames',
+  'credential-usernames': 'wordlist_credential_usernames',
+  'credential-passwords': 'wordlist_credential_passwords',
 }
 
 function wordlistFor(source: BuiltinWordlist, wordlists: BuiltinWordlists): string[] {
@@ -112,12 +116,13 @@ interface PayloadSetEditorProps {
 }
 
 export function PayloadSetEditor({ label, config, onChange, wordlists }: PayloadSetEditorProps) {
+  const { t } = useTranslation('intruder')
   const [previewOpen, setPreviewOpen] = useState(false)
   const [loadedFile, setLoadedFile] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const count = resolvePayloadSet(config, wordlists).length
   // One PayloadSetEditor renders per marked position, so ids need to be
-  // unique per instance — a hardcoded string would duplicate across
+  // unique per instance; a hardcoded string would duplicate across
   // multiple positions and break every Label's htmlFor association.
   const uid = useId()
 
@@ -134,11 +139,11 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
     <div className="border rounded-lg p-4 flex flex-col gap-3 min-w-0">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium">{label}</h4>
-        <Badge variant="secondary">{count} payload{count === 1 ? '' : 's'}</Badge>
+        <Badge variant="secondary">{t('payload_count', { count })}</Badge>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`${uid}-source`} className="text-xs">Source</Label>
+        <Label htmlFor={`${uid}-source`} className="text-xs">{t('source_label')}</Label>
         <Select
           value={config.source}
           onValueChange={(v) => onChange({ ...config, source: v as PayloadSource })}
@@ -147,9 +152,9 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {(Object.keys(SOURCE_LABELS) as PayloadSource[]).map((s) => (
+            {SOURCES.map((s) => (
               <SelectItem key={s} value={s}>
-                {SOURCE_LABELS[s]}
+                {t(`source_${s}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -159,14 +164,14 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
       {config.source === 'simple' && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor={`${uid}-simple-list`} className="text-xs">One value per line</Label>
+            <Label htmlFor={`${uid}-simple-list`} className="text-xs">{t('simple_list_label')}</Label>
             <div className="flex items-center gap-2">
               {loadedFile && (
-                <span className="text-xs text-muted-foreground">Loaded {loadedFile}</span>
+                <span className="text-xs text-muted-foreground">{t('loaded_file', { name: loadedFile })}</span>
               )}
               <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
                 <Upload />
-                Upload .txt
+                {t('upload_txt')}
               </Button>
               <input
                 ref={fileInputRef}
@@ -185,7 +190,7 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
               setLoadedFile(null)
               onChange({ ...config, simpleList: e.target.value })
             }}
-            placeholder={'admin\ntest\nroot\n…paste one value per line, or upload a .txt file above'}
+            placeholder={t('simple_list_placeholder')}
           />
         </div>
       )}
@@ -193,7 +198,7 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
       {config.source === 'wordlist' && (
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`${uid}-wordlist`} className="text-xs">Wordlist</Label>
+            <Label htmlFor={`${uid}-wordlist`} className="text-xs">{t('wordlist_label')}</Label>
             <Select
               value={config.wordlist}
               onValueChange={(v) => onChange({ ...config, wordlist: v as BuiltinWordlist })}
@@ -202,9 +207,9 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(WORDLIST_LABELS) as BuiltinWordlist[]).map((w) => (
+                {WORDLISTS_ORDER.map((w) => (
                   <SelectItem key={w} value={w}>
-                    {WORDLIST_LABELS[w]}
+                    {t(WORDLIST_KEY[w])}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -215,10 +220,10 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
             return (
               <>
                 <p className="text-xs text-muted-foreground">
-                  {list.length} {list.length === 1 ? 'entry' : 'entries'} in this wordlist.
+                  {t('wordlist_entries', { count: list.length })}
                   {(config.wordlist === 'credential-usernames' ||
                     config.wordlist === 'credential-passwords') &&
-                    ' Pair with the matching credential list via a Pitchfork attack to test real username:password combos.'}
+                    t('wordlist_credential_hint')}
                 </p>
                 <Button
                   size="sm"
@@ -227,12 +232,12 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
                   onClick={() => setPreviewOpen((v) => !v)}
                 >
                   {previewOpen ? <ChevronUp /> : <ChevronDown />}
-                  {previewOpen ? 'Hide preview' : 'Preview'}
+                  {previewOpen ? t('hide_preview') : t('preview')}
                 </Button>
                 {previewOpen && (
                   <div className="border rounded-md max-h-40 overflow-auto p-2 font-mono text-xs bg-muted/20">
                     {list.slice(0, 40).join('\n')}
-                    {list.length > 40 && `\n… +${list.length - 40} more`}
+                    {list.length > 40 && `\n${t('more_entries', { count: list.length - 40 })}`}
                   </div>
                 )}
               </>
@@ -244,7 +249,7 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
       {config.source === 'numbers' && (
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`${uid}-number-from`} className="text-xs">From</Label>
+            <Label htmlFor={`${uid}-number-from`} className="text-xs">{t('from_label')}</Label>
             <Input
               id={`${uid}-number-from`}
               size="lg"
@@ -254,7 +259,7 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`${uid}-number-to`} className="text-xs">To</Label>
+            <Label htmlFor={`${uid}-number-to`} className="text-xs">{t('to_label')}</Label>
             <Input
               id={`${uid}-number-to`}
               size="lg"
@@ -264,7 +269,7 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`${uid}-number-step`} className="text-xs">Step</Label>
+            <Label htmlFor={`${uid}-number-step`} className="text-xs">{t('step_label')}</Label>
             <Input
               id={`${uid}-number-step`}
               size="lg"
@@ -279,7 +284,7 @@ export function PayloadSetEditor({ label, config, onChange, wordlists }: Payload
               checked={config.zeroPad}
               onCheckedChange={(v) => onChange({ ...config, zeroPad: v })}
             />
-            <Label htmlFor={`${uid}-zero-pad`} className="text-xs">Zero-pad</Label>
+            <Label htmlFor={`${uid}-zero-pad`} className="text-xs">{t('zero_pad_label')}</Label>
           </div>
         </div>
       )}

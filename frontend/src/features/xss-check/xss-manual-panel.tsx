@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,9 @@ import { groupBy } from '@/lib/utils'
 import { useClipboardCopy } from '@/lib/use-clipboard-copy'
 import { detectParams } from '@/lib/detect-params'
 import type { RepeaterResponse, XssContext, XssPayload } from '@/lib/types'
-import { CONTEXT_LABEL } from './xss-report-view'
+import { CONTEXT_LABEL_KEY } from './xss-report-view'
+
+const code = <code />
 
 interface XssManualPanelProps {
   method: string
@@ -28,9 +31,10 @@ interface XssManualPanelProps {
 }
 
 /** XSS's "Manual" mode: pick a detected parameter, pick (or write) a
- * payload, and send it through the Repeater path — full control over
+ * payload, and send it through the Repeater path: full control over
  * exactly one request at a time, as a follow-up to what Automatic found. */
 export function XssManualPanel({ method, url, body, headerRows }: XssManualPanelProps) {
+  const { t } = useTranslation('xss-check')
   const [payloads, setPayloads] = useState<XssPayload[]>([])
   const { copiedValue, copy } = useClipboardCopy<string>()
   const [manualParam, setManualParam] = useState<string | null>(null)
@@ -90,19 +94,18 @@ export function XssManualPanel({ method, url, body, headerRows }: XssManualPanel
   return (
     <>
       <div className="flex flex-col gap-4 border rounded-lg p-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Manual injection</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{t('panel_title')}</h3>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="xss-manual-param">Parameter to inject</Label>
+          <Label htmlFor="xss-manual-param">{t('param_label')}</Label>
           {params.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              No parameters detected yet — add <code>?name=value</code> to the URL or fill in the
-              Body.
+              <Trans i18nKey="no_params_detected" ns="xss-check" components={[code]} />
             </p>
           ) : (
             <Select value={manualParam ?? undefined} onValueChange={setManualParam}>
               <SelectTrigger id="xss-manual-param" size="lg" className="w-full">
-                <SelectValue placeholder="Choose a parameter" />
+                <SelectValue placeholder={t('param_placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 {params.map((p) => (
@@ -117,14 +120,14 @@ export function XssManualPanel({ method, url, body, headerRows }: XssManualPanel
 
         <div className="flex gap-2 items-end">
           <div className="flex flex-col gap-1.5 flex-1">
-            <Label htmlFor="xss-manual-payload">Payload (pick from the wordlist below or edit freely)</Label>
+            <Label htmlFor="xss-manual-payload">{t('payload_label')}</Label>
             <Input
               id="xss-manual-payload"
               size="lg"
               className="font-mono"
               value={manualPayload}
               onChange={(e) => setManualPayload(e.target.value)}
-              placeholder="<script>alert(1)</script>"
+              placeholder={t('payload_placeholder')}
             />
           </div>
           <Button
@@ -134,7 +137,7 @@ export function XssManualPanel({ method, url, body, headerRows }: XssManualPanel
             disabled={manualSending || !manualParam || !manualPayload}
           >
             {manualSending && <Loader2 className="animate-spin" />}
-            Send
+            {t('send_button')}
           </Button>
         </div>
       </div>
@@ -155,16 +158,16 @@ export function XssManualPanel({ method, url, body, headerRows }: XssManualPanel
 
       <div className="border rounded-lg min-w-0">
         <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium rounded-t-lg">
-          Wordlist ({payloads.length} payloads)
+          {t('wordlist_header', { count: payloads.length })}
         </div>
         <div className="divide-y max-h-96 overflow-auto">
           {payloads.length === 0 && (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Loading...</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">{t('loading')}</div>
           )}
           {groupBy(payloads, (p) => p.context).map(([context, list]) => (
             <div key={context}>
               <div className="px-4 py-1.5 text-xs font-medium text-muted-foreground bg-muted/20">
-                {CONTEXT_LABEL[context as XssContext] ?? context}
+                {t(CONTEXT_LABEL_KEY[context as XssContext] ?? context)}
               </div>
               {list.map((p) => (
                 <div
@@ -183,12 +186,12 @@ export function XssManualPanel({ method, url, body, headerRows }: XssManualPanel
                     {copiedValue === p.value ? (
                       <>
                         <Check className="text-success" />
-                        Copied
+                        {t('copied')}
                       </>
                     ) : (
                       <>
                         <Copy />
-                        Use
+                        {t('use_button')}
                       </>
                     )}
                   </Button>

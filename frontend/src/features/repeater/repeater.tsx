@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { JsonEditor } from '@/components/json-editor'
@@ -52,7 +53,7 @@ function responseFileName(url: string): string {
     const u = new URL(url)
     base = `${u.hostname}${u.pathname}`.replace(/\/+$/, '').replace(/[^a-zA-Z0-9._-]+/g, '-')
   } catch {
-    // not a valid URL yet — fall back to the generic name
+    // not a valid URL yet, so fall back to the generic name
   }
   return `${base || 'response'}.txt`
 }
@@ -62,6 +63,7 @@ interface RepeaterProps {
 }
 
 export function Repeater({ seed }: RepeaterProps) {
+  const { t } = useTranslation('repeater')
   const [form, setForm] = useState<RequestForm>(EMPTY_FORM)
   const [attempts, setAttempts] = useState<Attempt[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -109,11 +111,11 @@ export function Repeater({ seed }: RepeaterProps) {
     <div className="flex gap-4 h-full min-h-0 min-w-0">
       <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-auto pr-1">
         <div className="flex flex-col gap-4 border rounded-lg p-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Request</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('request_title')}</h3>
 
           <div className="flex gap-2 items-end">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="repeater-method">Method</Label>
+              <Label htmlFor="repeater-method">{t('method_label')}</Label>
               <Select value={form.method} onValueChange={(v) => setForm({ ...form, method: v })}>
                 <SelectTrigger id="repeater-method" size="lg" className="w-28">
                   <SelectValue />
@@ -128,24 +130,24 @@ export function Repeater({ seed }: RepeaterProps) {
               </Select>
             </div>
             <div className="flex flex-col gap-1.5 flex-1">
-              <Label htmlFor="repeater-url">URL</Label>
+              <Label htmlFor="repeater-url">{t('url_label')}</Label>
               <Input
                 id="repeater-url"
                 size="lg"
                 className="font-mono"
                 value={form.url}
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
-                placeholder="https://authorized-target.com/product?id=1"
+                placeholder={t('url_placeholder')}
               />
             </div>
             <Button size="lg" className="shrink-0" onClick={handleSend}>
               <Send />
-              Send
+              {t('send')}
             </Button>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="repeater-body">Body</Label>
+            <Label htmlFor="repeater-body">{t('body_label')}</Label>
             <JsonEditor
               id="repeater-body"
               minHeightClass="min-h-24"
@@ -155,7 +157,7 @@ export function Repeater({ seed }: RepeaterProps) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Headers</Label>
+            <Label>{t('headers_label')}</Label>
             <HeadersEditor
               rows={form.headerRows}
               onChange={(rows) => setForm({ ...form, headerRows: rows })}
@@ -165,13 +167,13 @@ export function Repeater({ seed }: RepeaterProps) {
 
         <div className="border rounded-lg min-w-0 overflow-hidden">
           <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">
-            Send history
+            {t('send_history_title')}
           </div>
           {attempts.length === 0 ? (
             <EmptyState
               icon={History}
-              title="No sends yet"
-              description="Edit the request above and click Send."
+              title={t('empty_sends_title')}
+              description={t('empty_sends_description')}
             />
           ) : (
             <div className="divide-y max-h-64 overflow-auto">
@@ -189,9 +191,9 @@ export function Repeater({ seed }: RepeaterProps) {
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm font-medium">{a.request.method}</span>
                     {a.sending ? (
-                      <Badge variant="outline">sending…</Badge>
+                      <Badge variant="outline">{t('sending_badge')}</Badge>
                     ) : a.error ? (
-                      <Badge variant="outline">error</Badge>
+                      <Badge variant="outline">{t('error_badge')}</Badge>
                     ) : (
                       <Badge variant="secondary">{a.response?.status}</Badge>
                     )}
@@ -207,16 +209,16 @@ export function Repeater({ seed }: RepeaterProps) {
       </div>
 
       <div className="flex-1 min-w-0 border rounded-lg overflow-hidden flex flex-col">
-        <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">Response</div>
+        <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">{t('response_title')}</div>
         <div className="flex-1 overflow-auto p-4">
           {selected ? (
             selected.sending ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
-                Sending…
+                {t('sending_label')}
               </div>
             ) : selected.error ? (
-              <div className="text-sm text-destructive">Error: {selected.error}</div>
+              <div className="text-sm text-destructive">{t('error_prefix', { error: selected.error })}</div>
             ) : selected.response ? (
               <ResponseView
                 status={selected.response.status}
@@ -228,8 +230,8 @@ export function Repeater({ seed }: RepeaterProps) {
           ) : (
             <EmptyState
               icon={MousePointerClick}
-              title="Nothing sent yet"
-              description="The response appears here after sending."
+              title={t('empty_response_title')}
+              description={t('empty_response_description')}
             />
           )}
         </div>

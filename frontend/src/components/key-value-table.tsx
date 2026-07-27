@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 interface KeyValueTableProps {
@@ -6,6 +7,8 @@ interface KeyValueTableProps {
 }
 
 export function KeyValueTable({ pairs, emptyLabel }: KeyValueTableProps) {
+  const { t } = useTranslation('editor-components')
+
   if (pairs.length === 0) {
     return <div className="text-sm text-muted-foreground py-6 text-center">{emptyLabel}</div>
   }
@@ -14,8 +17,8 @@ export function KeyValueTable({ pairs, emptyLabel }: KeyValueTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Key</TableHead>
-          <TableHead>Value</TableHead>
+          <TableHead>{t('key_value_table_key')}</TableHead>
+          <TableHead>{t('key_value_table_value')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

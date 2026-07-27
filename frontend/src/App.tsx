@@ -1,8 +1,10 @@
 import { lazy, Suspense, useState } from 'react'
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar, type NavKey } from '@/components/app-sidebar'
+import { LanguageSwitcher } from '@/components/language-switcher'
 import type { RequestSeed } from '@/components/request-editor'
 import { headersToText, parseJSONHeaders } from '@/lib/headers'
 import { api } from '@/lib/api'
@@ -11,7 +13,7 @@ import type { RepeaterSeed } from '@/features/repeater/repeater'
 import type { IntruderSeed } from '@/features/intruder/intruder'
 
 // Each tool is its own chunk, loaded on first visit rather than all bundled
-// together up front — with 14 of these (several sizable, e.g. the SQLi/XSS
+// together up front: with 14 of these (several sizable, e.g. the SQLi/XSS
 // checkers), eagerly importing every one of them meant a single ~650KB JS
 // chunk even though a session typically only ever opens a handful of tabs.
 const ProxyHistory = lazy(() =>
@@ -37,12 +39,16 @@ const PassiveScan = lazy(() =>
 const SubdomainFinder = lazy(() =>
   import('@/features/subdomain-finder/subdomain-finder').then((m) => ({ default: m.SubdomainFinder })),
 )
+const DirFinder = lazy(() =>
+  import('@/features/dir-finder/dir-finder').then((m) => ({ default: m.DirFinder })),
+)
 const Settings = lazy(() =>
   import('@/features/settings/settings').then((m) => ({ default: m.Settings })),
 )
 const Certificate = lazy(() =>
   import('@/features/certificate/certificate').then((m) => ({ default: m.Certificate })),
 )
+const About = lazy(() => import('@/features/about/about').then((m) => ({ default: m.About })))
 const WordPressCheck = lazy(() =>
   import('@/features/wordpress-check/wordpress-check').then((m) => ({ default: m.WordPressCheck })),
 )
@@ -52,23 +58,6 @@ const SqliCheck = lazy(() =>
 const XssCheck = lazy(() =>
   import('@/features/xss-check/xss-check').then((m) => ({ default: m.XssCheck })),
 )
-
-const TITLES: Record<NavKey, string> = {
-  history: 'Proxy History',
-  intercept: 'Intercept',
-  repeater: 'Repeater',
-  intruder: 'Intruder',
-  'wordpress-check': 'WordPress Check',
-  'sqli-check': 'SQL Injection',
-  'xss-check': 'XSS',
-  'port-scanner': 'Port Scanner',
-  'subdomain-finder': 'Subdomain Finder',
-  spider: 'Spider',
-  'passive-scan': 'Passive Scan',
-  decoder: 'Decoder',
-  certificate: 'Certificate',
-  settings: 'Settings',
-}
 
 function toHeaders(req: SendableRequest): Headers {
   return typeof req.headers === 'string' ? parseJSONHeaders(req.headers) : req.headers
@@ -87,6 +76,7 @@ function toSeed(req: SendableRequest): RequestSeed {
 }
 
 function App() {
+  const { t } = useTranslation('common')
   const [nav, setNav] = useState<NavKey>('history')
   const [repeaterSeed, setRepeaterSeed] = useState<RepeaterSeed | null>(null)
   const [intruderSeed, setIntruderSeed] = useState<IntruderSeed | null>(null)
@@ -115,8 +105,8 @@ function App() {
       return
     }
     // 'intercept-response': resend this exact request through the real proxy
-    // pipeline with its response forced into the Intercept > Responses queue
-    // — fire-and-forget from here, it resolves once the user forwards/drops
+    // pipeline with its response forced into the Intercept > Responses queue.
+    // This is fire-and-forget from here; it resolves once the user forwards/drops
     // it over there (the HTTP call just stays pending until then).
     api
       .repeaterSend(
@@ -124,7 +114,7 @@ function App() {
         { interceptResponse: true },
       )
       .catch(() => {
-        /* the tab may navigate away before this resolves — nothing to show for it here */
+        /* the tab may navigate away before this resolves; nothing to show for it here */
       })
     setNav('intercept')
   }
@@ -155,10 +145,14 @@ function App() {
         return <PassiveScan />
       case 'subdomain-finder':
         return <SubdomainFinder />
+      case 'dir-finder':
+        return <DirFinder />
       case 'settings':
         return <Settings />
       case 'certificate':
         return <Certificate />
+      case 'about':
+        return <About />
     }
   }
 
@@ -183,9 +177,12 @@ function App() {
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   className="text-lg font-semibold tracking-tight"
                 >
-                  {TITLES[nav]}
+                  {t(`nav.${nav}`)}
                 </motion.h1>
               </AnimatePresence>
+              <div className="ml-auto">
+                <LanguageSwitcher />
+              </div>
             </header>
 
             <main className="flex-1 min-h-0 p-6">

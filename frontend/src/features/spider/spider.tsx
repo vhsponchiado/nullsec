@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -30,13 +31,14 @@ import { SpiderGuide } from './spider-guide'
 type SortKey = 'url' | 'status' | 'depth' | 'duration_ms'
 type Speed = 'fast' | 'normal' | 'cautious'
 
-const SPEED_PRESETS: Record<Speed, { label: string; concurrency: number }> = {
-  fast: { label: 'Fast', concurrency: 15 },
-  normal: { label: 'Normal', concurrency: 5 },
-  cautious: { label: 'Cautious', concurrency: 2 },
+const SPEED_PRESETS: Record<Speed, { concurrency: number }> = {
+  fast: { concurrency: 15 },
+  normal: { concurrency: 5 },
+  cautious: { concurrency: 2 },
 }
 
 export function Spider() {
+  const { t } = useTranslation('spider')
   const [url, setUrl] = useState('')
   const [maxDepth, setMaxDepth] = useState('3')
   const [maxPages, setMaxPages] = useState('200')
@@ -75,7 +77,7 @@ export function Spider() {
 
   async function handleStart() {
     if (!url.trim()) {
-      setStartError('URL is required.')
+      setStartError(t('url_required'))
       return
     }
     setStarting(true)
@@ -112,7 +114,7 @@ export function Spider() {
     try {
       await api.stopSpider(spiderId)
     } catch {
-      // the crawl may have already finished server-side — nothing to do
+      // the crawl may have already finished server-side, so there's nothing to do
     }
   }
 
@@ -144,11 +146,11 @@ export function Spider() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-w-0">
       <div className="min-w-0 flex flex-col gap-6 overflow-auto pr-1">
         <div className="flex flex-col gap-4 border rounded-lg p-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Target</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('target_section_title')}</h3>
 
           <div className="flex gap-2 items-end flex-wrap">
             <div className="flex flex-col gap-1.5 flex-1 min-w-48">
-              <Label htmlFor="spider-url">Start URL</Label>
+              <Label htmlFor="spider-url">{t('start_url_label')}</Label>
               <Input
                 id="spider-url"
                 size="lg"
@@ -156,25 +158,25 @@ export function Spider() {
                 value={url}
                 disabled={running}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://authorized-target.com"
+                placeholder={t('start_url_placeholder')}
               />
             </div>
             {!running ? (
               <Button size="lg" onClick={handleStart} disabled={starting} className="shrink-0">
                 {starting ? <Loader2 className="animate-spin" /> : <Play />}
-                Start crawl
+                {t('start_crawl')}
               </Button>
             ) : (
               <Button size="lg" variant="destructive" onClick={handleStop} className="shrink-0">
                 <Square />
-                Stop
+                {t('stop')}
               </Button>
             )}
           </div>
 
           <div className="flex items-end gap-3 flex-wrap">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="spider-max-depth" className="text-xs">Max depth</Label>
+              <Label htmlFor="spider-max-depth" className="text-xs">{t('max_depth_label')}</Label>
               <Input
                 id="spider-max-depth"
                 size="lg"
@@ -185,7 +187,7 @@ export function Spider() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="spider-max-pages" className="text-xs">Max pages</Label>
+              <Label htmlFor="spider-max-pages" className="text-xs">{t('max_pages_label')}</Label>
               <Input
                 id="spider-max-pages"
                 size="lg"
@@ -196,7 +198,7 @@ export function Spider() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="spider-speed" className="text-xs">Speed</Label>
+              <Label htmlFor="spider-speed" className="text-xs">{t('speed_label')}</Label>
               <Select value={speed} onValueChange={(v) => setSpeed(v as Speed)} disabled={running}>
                 <SelectTrigger id="spider-speed" size="lg" className="w-36">
                   <SelectValue />
@@ -204,7 +206,7 @@ export function Spider() {
                 <SelectContent>
                   {(Object.keys(SPEED_PRESETS) as Speed[]).map((s) => (
                     <SelectItem key={s} value={s}>
-                      {SPEED_PRESETS[s].label}
+                      {t(`speed_${s}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -212,7 +214,7 @@ export function Spider() {
             </div>
             <div className="flex items-center gap-2 pb-2.5">
               <Switch id="spider-include-subdomains" checked={includeSubdomains} onCheckedChange={setIncludeSubdomains} disabled={running} />
-              <Label htmlFor="spider-include-subdomains" className="text-sm">Include subdomains</Label>
+              <Label htmlFor="spider-include-subdomains" className="text-sm">{t('include_subdomains')}</Label>
             </div>
           </div>
 
@@ -221,10 +223,10 @@ export function Spider() {
               <Badge variant="outline">
                 {status === 'running' && <Loader2 className="size-3 animate-spin" />}
                 {status}
-                {pages.length > 0 && ` · ${pages.length} pages`}
+                {pages.length > 0 && ` · ${t('pages_count', { count: pages.length })}`}
               </Badge>
             )}
-            {formsFound > 0 && <Badge variant="secondary">{formsFound} forms found</Badge>}
+            {formsFound > 0 && <Badge variant="secondary">{t('forms_found', { count: formsFound })}</Badge>}
           </div>
 
           {startError && <div className="text-sm text-destructive">{startError}</div>}
@@ -232,13 +234,13 @@ export function Spider() {
 
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-medium text-muted-foreground">
-            Pages found — also streaming live into Proxy History
+            {t('results_title')}
           </h3>
           {sorted.length === 0 ? (
             <EmptyState
               icon={Waypoints}
-              title="No pages yet"
-              description="Set a start URL above and click Start crawl."
+              title={t('empty_title')}
+              description={t('empty_description')}
             />
           ) : (
             <div className="border rounded-lg overflow-auto max-h-[32rem]">
@@ -246,17 +248,17 @@ export function Spider() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('url')}>
-                      URL <ArrowUpDown className="inline size-3" />
+                      {t('column_url')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}>
-                      Status <ArrowUpDown className="inline size-3" />
+                      {t('column_status')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
-                    <TableHead>Title</TableHead>
+                    <TableHead>{t('column_title')}</TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('depth')}>
-                      Depth <ArrowUpDown className="inline size-3" />
+                      {t('column_depth')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
-                    <TableHead>Links</TableHead>
-                    <TableHead>Forms</TableHead>
+                    <TableHead>{t('column_links')}</TableHead>
+                    <TableHead>{t('column_forms')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -265,7 +267,7 @@ export function Spider() {
                       <TableCell className="font-mono text-xs max-w-72 truncate">{p.url}</TableCell>
                       <TableCell>
                         {p.error ? (
-                          <Badge variant="outline">error</Badge>
+                          <Badge variant="outline">{t('error_badge')}</Badge>
                         ) : (
                           <Badge variant={p.status >= 400 ? 'outline' : 'secondary'}>{p.status}</Badge>
                         )}

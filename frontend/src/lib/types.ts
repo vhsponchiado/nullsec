@@ -16,7 +16,7 @@ export interface HistoryItem {
   created_at: string
 }
 
-// Lightweight row for the history list — no headers/body/resp_body, which
+// Lightweight row for the history list: no headers/body/resp_body, which
 // can be arbitrarily large. The backend's `request_completed`/`request_dropped`
 // WS events carry exactly this shape (see entity.Request.Summary on the Go
 // side), not the full record, so browsing/crawling doesn't push captured
@@ -215,6 +215,9 @@ export type WsEventType =
   | 'subdomain_total'
   | 'subdomain_done'
   | 'subdomain_stopped'
+  | 'dirfinder_result'
+  | 'dirfinder_done'
+  | 'dirfinder_stopped'
   | 'spider_page'
   | 'spider_done'
   | 'spider_stopped'
@@ -392,6 +395,42 @@ export interface SubdomainTotalEvent {
   total: number
 }
 
+export interface DirFinderResult {
+  path: string
+  url: string
+  status: number
+  size: number
+  redirect?: string
+  duration_ms: number
+  error?: string
+}
+
+export interface DirFinderStartRequest {
+  target: string
+  wordlist_size: number
+  extensions?: string[]
+  concurrency?: number
+  timeout_ms?: number
+}
+
+export interface DirFinderStartResponse {
+  scan_id: string
+  total: number
+}
+
+export type DirFinderStatus = 'running' | 'done' | 'stopped'
+
+export interface DirFinderSnapshot {
+  status: DirFinderStatus
+  total: number
+  results: DirFinderResult[]
+}
+
+export interface DirFinderResultEvent {
+  scan_id: string
+  result: DirFinderResult
+}
+
 export interface SpiderForm {
   action: string
   method: string
@@ -549,7 +588,7 @@ export interface SendableRequest {
 }
 
 /** The two halves of the built-in username:password wordlist, in matching
- * order — pairing usernames[i] with passwords[i] via Intruder's Pitchfork
+ * order: pairing usernames[i] with passwords[i] via Intruder's Pitchfork
  * attack reproduces the original credential pairs. */
 export interface WordlistCredentials {
   usernames: string[]

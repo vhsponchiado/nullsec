@@ -1,9 +1,13 @@
 import { afterEach } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
+// Initializes i18next synchronously (initImmediate: false) with English as
+// the default language, so components using useTranslation() render their
+// real (English) copy in tests without any async wait or mocking.
+import './i18n'
 
 // vitest doesn't expose `afterEach` as a global (test.globals isn't set, to
-// keep every test file's imports explicit) — so @testing-library/react's own
+// keep every test file's imports explicit), so @testing-library/react's own
 // auto-cleanup, which only registers itself when it detects a global
 // `afterEach`, never kicks in unless this does it by hand. Without this,
 // each test's rendered DOM piles up on top of the previous one, tests

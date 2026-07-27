@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -25,13 +26,13 @@ interface TargetRequestFormProps {
   bodyPlaceholder: string
   headerRows: HeaderRow[]
   onHeaderRowsChange: (rows: HeaderRow[]) => void
-  /** Rendered next to the URL field — the mode-specific "Scan" button, when
+  /** Rendered next to the URL field: the mode-specific "Scan" button, when
    * there is one (only Automatic mode has one; Manual doesn't). */
   urlAction?: ReactNode
 }
 
 /** The "Target request" block (method/URL/body/headers) shared by the SQLi
- * and XSS checkers' Automatic and Manual modes — within one checker, both
+ * and XSS checkers' Automatic and Manual modes; within one checker, both
  * modes operate on the same in-flight target, so its state lives in the
  * container, not duplicated per mode. */
 export function TargetRequestForm({
@@ -48,13 +49,14 @@ export function TargetRequestForm({
   onHeaderRowsChange,
   urlAction,
 }: TargetRequestFormProps) {
+  const { t } = useTranslation('request-components')
   return (
     <div className="flex flex-col gap-4 border rounded-lg p-4">
-      <h3 className="text-sm font-medium text-muted-foreground">Target request</h3>
+      <h3 className="text-sm font-medium text-muted-foreground">{t('target_request_form_title')}</h3>
 
       <div className="flex gap-2 items-end">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`${idPrefix}-method`}>Method</Label>
+          <Label htmlFor={`${idPrefix}-method`}>{t('target_request_form_method')}</Label>
           <Select value={method} onValueChange={onMethodChange}>
             <SelectTrigger id={`${idPrefix}-method`} size="lg" className="w-28">
               <SelectValue />
@@ -69,7 +71,7 @@ export function TargetRequestForm({
           </Select>
         </div>
         <div className="flex flex-col gap-1.5 flex-1">
-          <Label htmlFor={`${idPrefix}-url`}>URL (with the query parameters you want to test)</Label>
+          <Label htmlFor={`${idPrefix}-url`}>{t('target_request_form_url_label')}</Label>
           <Input
             id={`${idPrefix}-url`}
             size="lg"
@@ -83,7 +85,9 @@ export function TargetRequestForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`${idPrefix}-body`}>Body (form-urlencoded, optional — e.g. {bodyPlaceholder})</Label>
+        <Label htmlFor={`${idPrefix}-body`}>
+          {t('target_request_form_body_label', { example: bodyPlaceholder })}
+        </Label>
         <Textarea
           id={`${idPrefix}-body`}
           className="font-mono text-sm min-h-20 resize-y"
@@ -94,7 +98,7 @@ export function TargetRequestForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>Headers (optional — e.g. Authorization, Cookie, etc.)</Label>
+        <Label>{t('target_request_form_headers_label')}</Label>
         <HeadersEditor rows={headerRows} onChange={onHeaderRowsChange} />
       </div>
     </div>

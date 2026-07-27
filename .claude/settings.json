@@ -57,7 +57,31 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('URL salva:', d[0]['url']\\)\")",
       "Bash(curl -s -X POST http://localhost:18081/api/intercept/toggle -H \"Content-Type: application/json\" -d '{\"enabled\": false}')",
       "Bash(curl -s \"http://localhost:8081/api/history?host=posthog.avantprocloud.com.br\")",
-      "Bash(curl -s \"http://localhost:8081/api/history/3b03cdb9-b418-4867-955f-b7d6f1574802\")"
+      "Bash(curl -s \"http://localhost:8081/api/history/3b03cdb9-b418-4867-955f-b7d6f1574802\")",
+      "Bash(git rm *)",
+      "Bash([ -f \"$MEM\" ])",
+      "WebSearch",
+      "Bash(go version *)",
+      "Bash(curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh)",
+      "Bash(go env *)",
+      "Bash(sh -s -- -b \"$\\(go env GOPATH\\)/bin\" v2.12.2)",
+      "Bash(curl -sSfL -o bin.tar.gz \"https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-linux-amd64.tar.gz\")",
+      "Bash(tar xzf *)",
+      "Bash(curl -sSfL \"https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt\" -o /tmp/common.txt)",
+      "Bash(grep -c '^$' /tmp/common.txt)",
+      "Bash(go test *)",
+      "Bash(npx oxlint *)",
+      "Bash(git checkout *)",
+      "Bash(grep -v \":0$\")",
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(echo \"grep exit: $?\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(git -C /home/vinicius-sponchiado/Documentos/nullsec/frontend diff --stat -- src/lib/i18n.ts)",
+      "Bash(grep -nE \"[A-Za-z]{3,}\" /home/vinicius-sponchiado/Documentos/nullsec/frontend/src/features/subdomain-finder/subdomain-finder.tsx)",
+      "Bash(git -C /home/vinicius-sponchiado/Documentos/nullsec/frontend status --porcelain)",
+      "Bash(grep -nE '>[A-Za-z][a-zA-Z ]{3,}<' sqli-check.tsx sqli-check-guide.tsx sqli-manual-panel.tsx sqli-report-view.tsx sqli-scan-item-view.tsx sqli-scan-panel.tsx)",
+      "Bash(git -C /home/vinicius-sponchiado/Documentos/nullsec status --porcelain -- frontend/src/features/xss-check/xss-report-view.test.tsx frontend/src/features/xss-check/xss-scan-item-view.test.tsx frontend/src/lib/i18n.ts)",
+      "Bash(grep -n '>[A-Z][a-zA-Z ]\\\\{3,\\\\}<\\\\|placeholder=\"[A-Za-z]\\\\|aria-label=\"[A-Za-z]\\\\|title=\"[A-Za-z]\\\\|\"[A-Z][a-z]\\\\+ [a-z]' intruder/intruder.tsx intruder/intruder-guide.tsx intruder/intruder-payloads.tsx intruder/intruder-results.tsx repeater/repeater.tsx intercept/intercept.tsx proxy-history/proxy-history.tsx)"
     ]
   }
 }

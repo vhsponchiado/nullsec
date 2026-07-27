@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -47,10 +48,10 @@ const MAX_REQUESTS = 20000
 
 type AttackSpeed = 'fast' | 'normal' | 'cautious'
 
-const SPEED_PRESETS: Record<AttackSpeed, { label: string; concurrency: number; timeoutMs: number }> = {
-  fast: { label: 'Fast', concurrency: 20, timeoutMs: 8000 },
-  normal: { label: 'Normal', concurrency: 5, timeoutMs: 15000 },
-  cautious: { label: 'Cautious', concurrency: 2, timeoutMs: 20000 },
+const SPEED_PRESETS: Record<AttackSpeed, { concurrency: number; timeoutMs: number }> = {
+  fast: { concurrency: 20, timeoutMs: 8000 },
+  normal: { concurrency: 5, timeoutMs: 15000 },
+  cautious: { concurrency: 2, timeoutMs: 20000 },
 }
 
 const MARKER_RE = /§[^§]*§/g
@@ -69,23 +70,7 @@ function headerRowsToIntruderHeaders(rows: HeaderRow[]): IntruderHeaderPair[] {
   return rows.filter((r) => r.key.trim()).map((r) => ({ key: r.key.trim(), value: r.value }))
 }
 
-const ATTACK_LABELS: Record<IntruderAttackType, string> = {
-  sniper: 'Sniper',
-  battering_ram: 'Battering ram',
-  pitchfork: 'Pitchfork',
-  cluster_bomb: 'Cluster bomb',
-}
-
-const ATTACK_DESCRIPTIONS: Record<IntruderAttackType, string> = {
-  sniper:
-    'One payload set. Each payload is tried in each position in turn, one at a time — other positions keep their original value. Good for fuzzing one parameter at a time.',
-  battering_ram:
-    'One payload set. The same payload is placed into every position at once. Good for testing a repeated value (e.g. the same token in two places).',
-  pitchfork:
-    "One payload set per position, all advancing together. Total requests = the shortest set's length. Good for pairing related values (e.g. username + matching password).",
-  cluster_bomb:
-    'One payload set per position, trying every combination. Total requests = the product of all set lengths. Good for brute-forcing unrelated fields together.',
-}
+const ATTACK_TYPES: IntruderAttackType[] = ['sniper', 'battering_ram', 'pitchfork', 'cluster_bomb']
 
 function estimateTotal(
   attackType: IntruderAttackType,
@@ -110,6 +95,7 @@ interface IntruderProps {
 }
 
 export function Intruder({ seed }: IntruderProps) {
+  const { t } = useTranslation('intruder')
   const [method, setMethod] = useState('GET')
   const [url, setUrl] = useState('')
   const [body, setBody] = useState('')
@@ -135,7 +121,7 @@ export function Intruder({ seed }: IntruderProps) {
   ])
   const [grep, setGrep] = useState('')
   const [speed, setSpeed] = useState<AttackSpeed>('normal')
-  // Empty string means "no cap" — only Concurrency/Speed governs pace. Kept
+  // Empty string means "no cap": only Concurrency/Speed governs pace. Kept
   // as a string (not number) so the field can be blank instead of forcing 0.
   const [rateLimit, setRateLimit] = useState('')
   const [wordlists, setWordlists] = useState<BuiltinWordlists>({
@@ -224,7 +210,7 @@ export function Intruder({ seed }: IntruderProps) {
 
   async function handleStart() {
     if (numPositions === 0) {
-      setStartError('Mark at least one payload position with §…§ first.')
+      setStartError(t('start_error_no_position'))
       return
     }
     setStarting(true)
@@ -252,7 +238,7 @@ export function Intruder({ seed }: IntruderProps) {
       setAttackId(resp.attack_id)
       setStatus('running')
       // Any results generated between the attack starting and this response
-      // arriving already landed server-side — pull them in directly instead
+      // arriving already landed server-side, so pull them in directly instead
       // of relying solely on the WS stream to have caught them all.
       try {
         const snapshot = await api.getIntruderAttack(resp.attack_id)
@@ -273,7 +259,7 @@ export function Intruder({ seed }: IntruderProps) {
     try {
       await api.stopIntruderAttack(attackId)
     } catch {
-      // the attack may have already finished server-side — nothing to do
+      // the attack may have already finished server-side, so there is nothing to do
     }
   }
 
@@ -300,16 +286,20 @@ export function Intruder({ seed }: IntruderProps) {
       <div className="min-w-0 flex flex-col gap-6 overflow-auto pr-1">
       <div className="flex flex-col gap-4 border rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Request</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('request_section_title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Select text in the URL or Body and click <span className="font-mono">§</span> to mark
-            it as a payload position. Header values can be marked the same way.
+            <Trans
+              i18nKey="request_mark_hint"
+              ns="intruder"
+              values={{ marker: '§' }}
+              components={[<span className="font-mono" key="0" />]}
+            />
           </p>
         </div>
 
         <div className="flex gap-2 items-end">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="intruder-method">Method</Label>
+            <Label htmlFor="intruder-method">{t('method_label')}</Label>
             <Select value={method} onValueChange={setMethod} disabled={running}>
               <SelectTrigger id="intruder-method" size="lg" className="w-28">
                 <SelectValue />
@@ -324,7 +314,7 @@ export function Intruder({ seed }: IntruderProps) {
             </Select>
           </div>
           <div className="flex flex-col gap-1.5 flex-1">
-            <Label htmlFor="intruder-url">URL</Label>
+            <Label htmlFor="intruder-url">{t('url_label')}</Label>
             <div className="flex gap-2">
               <Input
                 id="intruder-url"
@@ -334,7 +324,7 @@ export function Intruder({ seed }: IntruderProps) {
                 value={url}
                 disabled={running}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://authorized-target.com/login?user=§admin§&pass=§123§"
+                placeholder={t('url_placeholder')}
               />
               <MarkButton
                 getEl={() => urlRef.current}
@@ -348,7 +338,7 @@ export function Intruder({ seed }: IntruderProps) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="intruder-body">Body</Label>
+          <Label htmlFor="intruder-body">{t('body_label')}</Label>
           <div className="flex gap-2">
             <Textarea
               id="intruder-body"
@@ -357,28 +347,28 @@ export function Intruder({ seed }: IntruderProps) {
               value={body}
               disabled={running}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="user=§admin§&pass=§123§"
+              placeholder={t('body_placeholder')}
             />
             <MarkButton getEl={() => bodyRef.current} value={body} onChange={setBody} className="shrink-0" />
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label>Headers</Label>
+          <Label>{t('headers_label')}</Label>
           <HeadersEditor rows={headerRows} onChange={setHeaderRows} markable />
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">{numPositions} position{numPositions === 1 ? '' : 's'} marked</Badge>
+          <Badge variant="secondary">{t('positions_marked', { count: numPositions })}</Badge>
         </div>
       </div>
 
       <div className="flex flex-col gap-4 border rounded-lg p-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Attack</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{t('attack_section_title')}</h3>
 
         <div className="flex gap-3 items-end flex-wrap">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="intruder-attack-type">Attack type</Label>
+            <Label htmlFor="intruder-attack-type">{t('attack_type_label')}</Label>
             <Select
               value={attackType}
               onValueChange={(v) => setAttackType(v as IntruderAttackType)}
@@ -388,16 +378,16 @@ export function Intruder({ seed }: IntruderProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(ATTACK_LABELS) as IntruderAttackType[]).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {ATTACK_LABELS[t]}
+                {ATTACK_TYPES.map((at) => (
+                  <SelectItem key={at} value={at}>
+                    {t(`attack_${at}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1.5 flex-1 min-w-48">
-            <Label htmlFor="intruder-grep">Grep — match (optional)</Label>
+            <Label htmlFor="intruder-grep">{t('grep_label')}</Label>
             <Input
               id="intruder-grep"
               size="lg"
@@ -405,11 +395,11 @@ export function Intruder({ seed }: IntruderProps) {
               value={grep}
               disabled={running}
               onChange={(e) => setGrep(e.target.value)}
-              placeholder="e.g. Welcome back"
+              placeholder={t('grep_placeholder')}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="intruder-speed">Speed</Label>
+            <Label htmlFor="intruder-speed">{t('speed_label')}</Label>
             <Select value={speed} onValueChange={(v) => setSpeed(v as AttackSpeed)} disabled={running}>
               <SelectTrigger id="intruder-speed" size="lg" className="w-36">
                 <SelectValue />
@@ -417,14 +407,14 @@ export function Intruder({ seed }: IntruderProps) {
               <SelectContent>
                 {(Object.keys(SPEED_PRESETS) as AttackSpeed[]).map((s) => (
                   <SelectItem key={s} value={s}>
-                    {SPEED_PRESETS[s].label}
+                    {t(`speed_${s}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="intruder-rate-limit">Max req/s (optional)</Label>
+            <Label htmlFor="intruder-rate-limit">{t('rate_limit_label')}</Label>
             <Input
               id="intruder-rate-limit"
               size="lg"
@@ -435,26 +425,32 @@ export function Intruder({ seed }: IntruderProps) {
               value={rateLimit}
               disabled={running}
               onChange={(e) => setRateLimit(e.target.value)}
-              placeholder="none"
+              placeholder={t('rate_limit_placeholder')}
             />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">{ATTACK_DESCRIPTIONS[attackType]}</p>
+        <p className="text-xs text-muted-foreground">{t(`attack_desc_${attackType}`)}</p>
         <p className="text-xs text-muted-foreground">
           {speed === 'fast' &&
-            `Fast — ${SPEED_PRESETS.fast.concurrency} concurrent requests, ${SPEED_PRESETS.fast.timeoutMs / 1000}s timeout. Quickest, but more likely to trip account lockouts, rate limits, or overload the target.`}
+            t('speed_hint_fast', {
+              concurrency: SPEED_PRESETS.fast.concurrency,
+              timeout: SPEED_PRESETS.fast.timeoutMs / 1000,
+            })}
           {speed === 'normal' &&
-            `Normal — ${SPEED_PRESETS.normal.concurrency} concurrent requests, ${SPEED_PRESETS.normal.timeoutMs / 1000}s timeout. Balanced default.`}
+            t('speed_hint_normal', {
+              concurrency: SPEED_PRESETS.normal.concurrency,
+              timeout: SPEED_PRESETS.normal.timeoutMs / 1000,
+            })}
           {speed === 'cautious' &&
-            `Cautious — ${SPEED_PRESETS.cautious.concurrency} concurrent requests, ${SPEED_PRESETS.cautious.timeoutMs / 1000}s timeout. Gentler on lockout-prone logins and rate-limited targets.`}
-          {rateLimit.trim() &&
-            ` Throttled to at most ${rateLimit}/s regardless of concurrency, spacing requests out with a delay between dispatches.`}
+            t('speed_hint_cautious', {
+              concurrency: SPEED_PRESETS.cautious.concurrency,
+              timeout: SPEED_PRESETS.cautious.timeoutMs / 1000,
+            })}
+          {rateLimit.trim() && t('rate_limit_hint', { rate: rateLimit })}
         </p>
 
         {numPositions === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No positions marked yet — mark at least one value above to configure payloads.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('no_positions_marked')}</p>
         ) : (
           <div className="flex flex-col gap-3">
             {payloadConfigs.map((cfg, i) => (
@@ -462,8 +458,8 @@ export function Intruder({ seed }: IntruderProps) {
                 key={i}
                 label={
                   attackType === 'sniper' || attackType === 'battering_ram'
-                    ? 'Payload set 1'
-                    : `Payload set ${i + 1} (${positionLabels[i]})`
+                    ? t('payload_set_single')
+                    : t('payload_set_numbered', { index: i + 1, label: positionLabels[i] })
                 }
                 config={cfg}
                 wordlists={wordlists}
@@ -481,19 +477,19 @@ export function Intruder({ seed }: IntruderProps) {
           {!running ? (
             <Button size="lg" onClick={handleStart} disabled={starting || numPositions === 0 || overCap}>
               {starting ? <Loader2 className="animate-spin" /> : <Play />}
-              Start attack
+              {t('start_attack')}
             </Button>
           ) : (
             <Button size="lg" variant="destructive" onClick={handleStop}>
               <Square />
-              Stop
+              {t('stop')}
             </Button>
           )}
 
           {estimate !== null && (
             <Badge variant={overCap ? 'outline' : 'secondary'} className={overCap ? 'border-destructive text-destructive' : ''}>
-              {estimate.toLocaleString()} request{estimate === 1 ? '' : 's'}
-              {overCap && ` — over the ${MAX_REQUESTS.toLocaleString()} limit`}
+              {t('estimate_requests', { count: estimate })}
+              {overCap && t('estimate_over_cap', { limit: MAX_REQUESTS.toLocaleString() })}
             </Badge>
           )}
 
@@ -501,7 +497,10 @@ export function Intruder({ seed }: IntruderProps) {
             <Badge variant="outline">
               {status === 'running' && <Loader2 className="size-3 animate-spin" />}
               {status}
-              {results.length > 0 && ` · ${results.length}${estimate ? `/${estimate}` : ''} done`}
+              {results.length > 0 &&
+                (estimate
+                  ? t('attack_status_done_of_estimate', { done: results.length, estimate })
+                  : t('attack_status_done', { done: results.length }))}
             </Badge>
           )}
         </div>
@@ -510,7 +509,7 @@ export function Intruder({ seed }: IntruderProps) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-medium text-muted-foreground">Results</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{t('results_title')}</h3>
         <IntruderResults
           results={results}
           positionLabels={positionLabels}
@@ -521,7 +520,7 @@ export function Intruder({ seed }: IntruderProps) {
       </div>
 
       <div className="border rounded-lg min-w-0">
-        <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">Detail</div>
+        <div className="px-4 py-2.5 border-b bg-muted/40 text-sm font-medium">{t('detail_title')}</div>
         <IntruderResultDetailView detail={selectedDetail} loading={detailLoading} />
       </div>
       </div>

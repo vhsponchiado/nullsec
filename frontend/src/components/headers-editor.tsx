@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { X, Plus, Globe } from 'lucide-react'
@@ -12,7 +13,7 @@ export interface HeaderRow {
 
 // Go's http.Client sends "User-Agent: Go-http-client/1.1" when none is set,
 // a well-known automation signature that WAFs (Cloudflare's in particular)
-// block on sight — often before the request ever reaches the target's own
+// block on sight, often before the request ever reaches the target's own
 // login logic. This preset fills in the headers a real browser would send,
 // which clears that specific bot-signature check. It can't spoof the TLS/JA3
 // fingerprint, so a WAF checking that layer will still need other handling.
@@ -40,11 +41,12 @@ interface HeadersEditorProps {
   rows: HeaderRow[]
   onChange: (rows: HeaderRow[]) => void
   // Intruder's request builder needs to mark §…§ payload positions inside
-  // header values — everywhere else this stays off and renders unchanged.
+  // header values; everywhere else this stays off and renders unchanged.
   markable?: boolean
 }
 
 export function HeadersEditor({ rows, onChange, markable }: HeadersEditorProps) {
+  const { t } = useTranslation('editor-components')
   const valueEls = useRef<Map<number, HTMLInputElement>>(new Map())
 
   function updateRow(i: number, patch: Partial<HeaderRow>) {
@@ -64,7 +66,7 @@ export function HeadersEditor({ rows, onChange, markable }: HeadersEditorProps) 
       {rows.map((row, i) => (
         <div key={i} className="flex gap-2 items-center">
           <Input
-            placeholder="Header"
+            placeholder={t('headers_editor_header_placeholder')}
             value={row.key}
             onChange={(e) => updateRow(i, { key: e.target.value })}
             className="flex-1 font-mono"
@@ -74,7 +76,7 @@ export function HeadersEditor({ rows, onChange, markable }: HeadersEditorProps) 
               if (el) valueEls.current.set(i, el)
               else valueEls.current.delete(i)
             }}
-            placeholder="Value"
+            placeholder={t('headers_editor_value_placeholder')}
             value={row.value}
             onChange={(e) => updateRow(i, { value: e.target.value })}
             className="flex-1 font-mono"
@@ -92,7 +94,7 @@ export function HeadersEditor({ rows, onChange, markable }: HeadersEditorProps) 
             variant="ghost"
             className="shrink-0 text-muted-foreground hover:text-destructive"
             onClick={() => removeRow(i)}
-            aria-label="Remove header"
+            aria-label={t('headers_editor_remove_header')}
           >
             <X />
           </Button>
@@ -101,17 +103,17 @@ export function HeadersEditor({ rows, onChange, markable }: HeadersEditorProps) 
       <div className="flex gap-2">
         <Button size="sm" variant="outline" onClick={addRow} className="w-fit">
           <Plus />
-          Add header
+          {t('headers_editor_add_header')}
         </Button>
         <Button
           size="sm"
           variant="outline"
           className="w-fit"
           onClick={() => onChange(applyPreset(rows, BROWSER_PRESET))}
-          title="Fill in User-Agent, Accept and Accept-Language as a real browser would send them — helps get past WAF rules that block Go's default User-Agent"
+          title={t('headers_editor_browser_headers_title')}
         >
           <Globe />
-          Browser headers
+          {t('headers_editor_browser_headers')}
         </Button>
       </div>
     </div>

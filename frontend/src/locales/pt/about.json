@@ -1,0 +1,9 @@
+{
+  "project_title": "Nullsec Proxy",
+  "project_description": "Um proxy interceptador HTTP/HTTPS estilo Burp Suite: CA própria para MITM, histórico de requisições/respostas e um conjunto crescente de ferramentas de reconhecimento e varredura, construído como um kit de pentest pessoal.",
+  "credits_title": "Créditos",
+  "credits_description": "Desenvolvido e mantido por:",
+  "developer_name": "Vinicius Henrique Sponchiado",
+  "private_title": "Projeto privado",
+  "private_description": "Não é open source. Feito para uso pessoal em engajamentos de pentest autorizados."
+}

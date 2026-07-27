@@ -1,0 +1,12 @@
+{
+  "url_placeholder": "https://authorized-target.com",
+  "scan_button": "Scan",
+  "disclaimer": "Only makes read-only GET requests (fingerprinting) against known WordPress endpoints. Use only on targets you're authorized to test.",
+  "checked_count": "{{count}} checked",
+  "found_count": "{{count}} found",
+  "critical_count": "{{count}} critical",
+  "status_error": "error",
+  "status_na": "n/a",
+  "found_badge": "Found",
+  "not_found_badge": "Not found"
+}

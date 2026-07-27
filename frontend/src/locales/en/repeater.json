@@ -1,0 +1,19 @@
+{
+  "request_title": "Request",
+  "method_label": "Method",
+  "url_label": "URL",
+  "url_placeholder": "https://authorized-target.com/product?id=1",
+  "send": "Send",
+  "body_label": "Body",
+  "headers_label": "Headers",
+  "send_history_title": "Send history",
+  "empty_sends_title": "No sends yet",
+  "empty_sends_description": "Edit the request above and click Send.",
+  "sending_badge": "sending…",
+  "error_badge": "error",
+  "response_title": "Response",
+  "sending_label": "Sending…",
+  "error_prefix": "Error: {{error}}",
+  "empty_response_title": "Nothing sent yet",
+  "empty_response_description": "The response appears here after sending."
+}

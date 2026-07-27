@@ -12,6 +12,7 @@ import (
 
 	"nullsec/backend/internal/entity"
 	certificateuc "nullsec/backend/internal/usecase/certificate"
+	dirfinderuc "nullsec/backend/internal/usecase/dirfinder"
 	intruderuc "nullsec/backend/internal/usecase/intruder"
 	portscanuc "nullsec/backend/internal/usecase/portscan"
 	proxyuc "nullsec/backend/internal/usecase/proxy"
@@ -28,6 +29,7 @@ type API struct {
 	interceptor         *proxyuc.Interceptor
 	responseInterceptor *proxyuc.ResponseInterceptor
 	certificate         *certificateuc.UseCase
+	dirfinder           *dirfinderuc.Manager
 	intruder            *intruderuc.Manager
 	portscan            *portscanuc.Manager
 	subdomain           *subdomainuc.Manager
@@ -43,6 +45,7 @@ func NewHandler(
 	interceptor *proxyuc.Interceptor,
 	responseInterceptor *proxyuc.ResponseInterceptor,
 	certificate *certificateuc.UseCase,
+	dirfinderMgr *dirfinderuc.Manager,
 	intruderMgr *intruderuc.Manager,
 	portscanMgr *portscanuc.Manager,
 	subdomainMgr *subdomainuc.Manager,
@@ -57,6 +60,7 @@ func NewHandler(
 		interceptor:         interceptor,
 		responseInterceptor: responseInterceptor,
 		certificate:         certificate,
+		dirfinder:           dirfinderMgr,
 		intruder:            intruderMgr,
 		portscan:            portscanMgr,
 		subdomain:           subdomainMgr,
@@ -125,6 +129,11 @@ func NewHandler(
 	mux.HandleFunc("POST /api/tools/subdomain/start", a.subdomainStart)
 	mux.HandleFunc("POST /api/tools/subdomain/{id}/stop", a.subdomainStop)
 	mux.HandleFunc("GET /api/tools/subdomain/{id}", a.subdomainStatus)
+
+	mux.HandleFunc("GET /api/tools/dirfinder/wordlist-size", a.dirfinderWordlistSize)
+	mux.HandleFunc("POST /api/tools/dirfinder/start", a.dirfinderStart)
+	mux.HandleFunc("POST /api/tools/dirfinder/{id}/stop", a.dirfinderStop)
+	mux.HandleFunc("GET /api/tools/dirfinder/{id}", a.dirfinderStatus)
 
 	mux.HandleFunc("GET /api/settings/upstream-proxy", a.getUpstreamProxy)
 	mux.HandleFunc("POST /api/settings/upstream-proxy", a.setUpstreamProxy)

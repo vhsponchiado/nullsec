@@ -12,14 +12,14 @@ export function detectParams(url: string, body: string): DetectedParam[] {
     const u = new URL(url)
     for (const name of u.searchParams.keys()) out.push({ location: 'query', name })
   } catch {
-    // invalid/incomplete URL — no query params yet
+    // invalid/incomplete URL: no query params yet
   }
   if (body.trim()) {
     try {
       const params = new URLSearchParams(body)
       for (const name of params.keys()) out.push({ location: 'body', name })
     } catch {
-      // not form-urlencoded — ignore
+      // not form-urlencoded, so ignore
     }
   }
   return out

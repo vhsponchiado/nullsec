@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -10,7 +11,7 @@ export interface RequestEditorValue {
   body: string
 }
 
-/** Shared "send this request to another tool" payload — used to seed the
+/** Shared "send this request to another tool" payload, used to seed the
  * Repeater, SQL Injection scanner, etc. from a History/Intercept entry. The
  * `nonce` changes on every send so the receiving feature can tell a fresh
  * seed apart from the same values sent twice in a row. */
@@ -26,11 +27,12 @@ interface RequestEditorProps {
 }
 
 export function RequestEditor({ value, onChange, readOnly }: RequestEditorProps) {
+  const { t } = useTranslation('request-components')
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-3">
         <div className="flex flex-col gap-1.5 w-32">
-          <Label htmlFor="req-method">Method</Label>
+          <Label htmlFor="req-method">{t('request_editor_method')}</Label>
           <Input
             id="req-method"
             size="lg"
@@ -40,7 +42,7 @@ export function RequestEditor({ value, onChange, readOnly }: RequestEditorProps)
           />
         </div>
         <div className="flex flex-col gap-1.5 flex-1">
-          <Label htmlFor="req-url">URL</Label>
+          <Label htmlFor="req-url">{t('request_editor_url')}</Label>
           <Input
             id="req-url"
             size="lg"
@@ -53,7 +55,7 @@ export function RequestEditor({ value, onChange, readOnly }: RequestEditorProps)
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="req-headers">Headers</Label>
+        <Label htmlFor="req-headers">{t('request_editor_headers')}</Label>
         <Textarea
           id="req-headers"
           className="font-mono text-sm min-h-32 resize-y"
@@ -64,7 +66,7 @@ export function RequestEditor({ value, onChange, readOnly }: RequestEditorProps)
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="req-body">Body</Label>
+        <Label htmlFor="req-body">{t('request_editor_body')}</Label>
         <JsonEditor
           id="req-body"
           minHeightClass="min-h-48"

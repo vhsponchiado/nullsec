@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Table,
@@ -38,6 +39,7 @@ interface ProxyHistoryProps {
 }
 
 export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
+  const { t } = useTranslation('proxy-history')
   const [items, setItems] = useState<HistorySummary[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
@@ -98,7 +100,7 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
   }
 
   // Only splice live events into the visible list while looking at the
-  // first page (the "latest" page) — on any other page, an insert at the
+  // first page (the "latest" page); on any other page, an insert at the
   // front would silently shift every row out from under the user's place.
   // `item` is only ever a summary (the WS event doesn't carry headers/body),
   // so if the row happens to be the one currently open, re-fetch the full
@@ -124,7 +126,7 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
   })
 
   async function handleClear() {
-    if (!confirm('Clear the entire history? This action cannot be undone.')) return
+    if (!confirm(t('clear_history_confirm'))) return
     await api.clearHistory()
     setSelectedId(null)
     load({ page: 0 })
@@ -143,11 +145,11 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load({ page: 0 })}
-            placeholder="Search by host..."
+            placeholder={t('search_placeholder')}
           />
         </div>
         <Button size="lg" variant="outline" onClick={() => load({ page: 0 })}>
-          Filter
+          {t('filter')}
         </Button>
         <div className="ml-auto flex items-center gap-2">
           <Button
@@ -155,7 +157,7 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
             variant="outline"
             className="text-muted-foreground hover:text-destructive"
             onClick={handleClear}
-            aria-label="Clear history"
+            aria-label={t('clear_history_aria')}
           >
             <Trash2 />
           </Button>
@@ -163,7 +165,7 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <Badge variant="secondary">{total.toLocaleString()} total</Badge>
+        <Badge variant="secondary">{t('total_badge', { count: total.toLocaleString() })}</Badge>
         {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
         <div className="flex items-center gap-1 ml-auto">
           <Button
@@ -171,19 +173,19 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
             variant="outline"
             disabled={page === 0 || loading}
             onClick={() => load({ page: page - 1 })}
-            aria-label="Previous page"
+            aria-label={t('prev_page_aria')}
           >
             <ChevronLeft />
           </Button>
           <span className="text-xs text-muted-foreground font-mono px-1">
-            Page {page + 1} / {totalPages}
+            {t('page_indicator', { page: page + 1, total: totalPages })}
           </span>
           <Button
             size="icon-sm"
             variant="outline"
             disabled={page + 1 >= totalPages || loading}
             onClick={() => load({ page: page + 1 })}
-            aria-label="Next page"
+            aria-label={t('next_page_aria')}
           >
             <ChevronRight />
           </Button>
@@ -195,12 +197,12 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Method</TableHead>
-                <TableHead>Host</TableHead>
-                <TableHead>Path</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Time</TableHead>
+                <TableHead>{t('column_method')}</TableHead>
+                <TableHead>{t('column_host')}</TableHead>
+                <TableHead>{t('column_path')}</TableHead>
+                <TableHead>{t('column_status')}</TableHead>
+                <TableHead>{t('column_size')}</TableHead>
+                <TableHead>{t('column_time')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -222,7 +224,7 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
                     </TableCell>
                     <TableCell>
                       {item.outcome === 'dropped' ? (
-                        <Badge variant="outline">dropped</Badge>
+                        <Badge variant="outline">{t('dropped_badge')}</Badge>
                       ) : (
                         <StatusDot status={item.status} />
                       )}
@@ -235,7 +237,7 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
               {items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    No requests captured yet.
+                    {t('empty_history')}
                   </TableCell>
                 </TableRow>
               )}
@@ -258,10 +260,10 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
                 {detailLoading ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Loading…
+                    {t('loading')}
                   </>
                 ) : (
-                  'Could not load this request.'
+                  t('could_not_load')
                 )}
               </div>
             ) : (
@@ -274,36 +276,36 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Request
+                        {t('request_label')}
                       </span>
                       <Button size="sm" variant="outline" onClick={() => onSendTo('repeater', selectedDetail)}>
-                        Send to Repeater
+                        {t('send_to_repeater')}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => onSendTo('sqli-check', selectedDetail)}
                       >
-                        Send to SQLi
+                        {t('send_to_sqli')}
                       </Button>
                     </div>
                   </div>
                   <Tabs defaultValue="headers" className="flex-1 min-h-0 flex flex-col p-3 gap-3">
                     <TabsList variant="line" className="w-fit">
-                      <TabsTrigger value="query">Query Params</TabsTrigger>
-                      <TabsTrigger value="headers">Headers</TabsTrigger>
-                      <TabsTrigger value="body">Body</TabsTrigger>
+                      <TabsTrigger value="query">{t('tab_query_params')}</TabsTrigger>
+                      <TabsTrigger value="headers">{t('tab_headers')}</TabsTrigger>
+                      <TabsTrigger value="body">{t('tab_body')}</TabsTrigger>
                     </TabsList>
                     <TabsContent value="query" className="flex-1 min-h-0 overflow-auto">
                       <KeyValueTable
                         pairs={queryParamsToPairs(selectedDetail.url)}
-                        emptyLabel="No query params."
+                        emptyLabel={t('no_query_params')}
                       />
                     </TabsContent>
                     <TabsContent value="headers" className="flex-1 min-h-0 overflow-auto">
                       <KeyValueTable
                         pairs={headersToPairs(parseJSONHeaders(selectedDetail.headers))}
-                        emptyLabel="No headers."
+                        emptyLabel={t('no_headers')}
                       />
                     </TabsContent>
                     <TabsContent value="body" className="flex-1 min-h-0 overflow-auto">
@@ -316,13 +318,13 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
                   <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
                     <StatusDot status={selectedDetail.status} />
                     <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Response
+                      {t('response_label')}
                     </span>
                   </div>
                   <Tabs defaultValue="body" className="flex-1 min-h-0 flex flex-col p-3 gap-3">
                     <TabsList variant="line" className="w-fit">
-                      <TabsTrigger value="body">Body ({selectedDetail.size} bytes)</TabsTrigger>
-                      <TabsTrigger value="headers">Headers</TabsTrigger>
+                      <TabsTrigger value="body">{t('tab_body_bytes', { size: selectedDetail.size })}</TabsTrigger>
+                      <TabsTrigger value="headers">{t('tab_headers')}</TabsTrigger>
                     </TabsList>
                     <TabsContent value="body" className="flex-1 min-h-0 overflow-auto">
                       <JsonView content={selectedDetail.resp_body} />
@@ -330,7 +332,7 @@ export function ProxyHistory({ onSendTo }: ProxyHistoryProps) {
                     <TabsContent value="headers" className="flex-1 min-h-0 overflow-auto">
                       <KeyValueTable
                         pairs={headersToPairs(parseJSONHeaders(selectedDetail.resp_headers))}
-                        emptyLabel="No headers."
+                        emptyLabel={t('no_headers')}
                       />
                     </TabsContent>
                   </Tabs>

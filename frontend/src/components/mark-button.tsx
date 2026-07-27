@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
 /** Wraps the current text selection of `el` in §…§ (Burp-style payload
@@ -28,21 +29,22 @@ interface MarkButtonProps {
   className?: string
   // Match whatever height the paired field renders at: "icon" (h-8) next to
   // a default Input, "icon-lg" (h-11) next to a size="lg" Input. Textareas
-  // don't need this — the flex row already stretches the button to match.
+  // don't need this: the flex row already stretches the button to match.
   size?: 'icon' | 'icon-lg'
 }
 
 /** Small "§" toolbar button that marks the current selection of a paired
  * input/textarea as an Intruder payload position. */
 export function MarkButton({ getEl, value, onChange, className, size = 'icon' }: MarkButtonProps) {
+  const { t } = useTranslation('editor-components')
   return (
     <Button
       type="button"
       size={size}
       variant="outline"
       className={className}
-      title="Mark selection as a payload position (§…§)"
-      aria-label="Mark selection as a payload position"
+      title={t('mark_button_title')}
+      aria-label={t('mark_button_aria_label')}
       onClick={() => {
         const el = getEl()
         if (!el) return

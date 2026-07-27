@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -34,17 +36,17 @@ import { PortScannerGuide } from './port-scanner-guide'
 
 type PortMode = 'top100' | 'top1000' | 'custom'
 
-function parsePortSpec(spec: string): { ports: number[]; error: string | null } {
+function parsePortSpec(spec: string, t: TFunction): { ports: number[]; error: string | null } {
   const seen = new Set<number>()
   const out: number[] = []
   const parts = spec.split(',').map((s) => s.trim()).filter(Boolean)
   for (const part of parts) {
     const m = /^(\d+)(?:-(\d+))?$/.exec(part)
-    if (!m) return { ports: [], error: `Invalid port spec "${part}"` }
+    if (!m) return { ports: [], error: t('invalid_port_spec', { part }) }
     const start = parseInt(m[1], 10)
     const end = m[2] ? parseInt(m[2], 10) : start
     if (start < 1 || end > 65535 || end < start) {
-      return { ports: [], error: `Port range "${part}" out of bounds (1-65535)` }
+      return { ports: [], error: t('port_range_out_of_bounds', { part }) }
     }
     for (let p = start; p <= end; p++) {
       if (!seen.has(p)) {
@@ -53,7 +55,7 @@ function parsePortSpec(spec: string): { ports: number[]; error: string | null } 
       }
     }
   }
-  if (out.length === 0) return { ports: [], error: 'No ports specified' }
+  if (out.length === 0) return { ports: [], error: t('no_ports_specified') }
   out.sort((a, b) => a - b)
   return { ports: out, error: null }
 }
@@ -72,15 +74,16 @@ const STATE_CLASS: Record<PortScanState, string> = {
 
 type ScanSpeed = 'fast' | 'normal' | 'cautious'
 
-const SPEED_PRESETS: Record<ScanSpeed, { label: string; concurrency: number; timeoutMs: number }> = {
-  fast: { label: 'Fast', concurrency: 400, timeoutMs: 500 },
-  normal: { label: 'Normal', concurrency: 200, timeoutMs: 800 },
-  cautious: { label: 'Cautious', concurrency: 20, timeoutMs: 2000 },
+const SPEED_PRESETS: Record<ScanSpeed, { concurrency: number; timeoutMs: number }> = {
+  fast: { concurrency: 400, timeoutMs: 500 },
+  normal: { concurrency: 200, timeoutMs: 800 },
+  cautious: { concurrency: 20, timeoutMs: 2000 },
 }
 
 type SortKey = 'port' | 'state' | 'duration_ms'
 
 export function PortScanner() {
+  const { t } = useTranslation('port-scanner')
   const [host, setHost] = useState('')
   const [mode, setMode] = useState<PortMode>('top100')
   const [customSpec, setCustomSpec] = useState('1-1024')
@@ -94,8 +97,8 @@ export function PortScanner() {
   }, [])
 
   const { ports: customPorts, error: customError } = useMemo(
-    () => (mode === 'custom' ? parsePortSpec(customSpec) : { ports: [], error: null }),
-    [mode, customSpec],
+    () => (mode === 'custom' ? parsePortSpec(customSpec, t) : { ports: [], error: null }),
+    [mode, customSpec, t],
   )
 
   const portCount = mode === 'top100' ? top100Count : mode === 'top1000' ? top1000Count : customPorts.length
@@ -133,12 +136,12 @@ export function PortScanner() {
 
   async function handleStart() {
     if (!host.trim()) {
-      setStartError('Host is required.')
+      setStartError(t('host_required'))
       return
     }
     const ports = mode === 'top100' ? null : mode === 'top1000' ? null : customPorts
     if (mode === 'custom' && (customError || customPorts.length === 0)) {
-      setStartError(customError ?? 'No ports specified.')
+      setStartError(customError ?? t('no_ports_specified'))
       return
     }
 
@@ -189,7 +192,7 @@ export function PortScanner() {
     try {
       await api.stopPortScan(scanId)
     } catch {
-      // the scan may have already finished server-side — nothing to do
+      // the scan may have already finished server-side, nothing to do
     }
   }
 
@@ -227,11 +230,11 @@ export function PortScanner() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-w-0">
       <div className="min-w-0 flex flex-col gap-6 overflow-auto pr-1">
         <div className="flex flex-col gap-4 border rounded-lg p-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Target</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('target_section_title')}</h3>
 
           <div className="flex gap-2 items-end flex-wrap">
             <div className="flex flex-col gap-1.5 flex-1 min-w-48">
-              <Label htmlFor="portscan-host">Host</Label>
+              <Label htmlFor="portscan-host">{t('host_label')}</Label>
               <Input
                 id="portscan-host"
                 size="lg"
@@ -239,24 +242,24 @@ export function PortScanner() {
                 value={host}
                 disabled={running}
                 onChange={(e) => setHost(e.target.value)}
-                placeholder="scanme.nmap.org"
+                placeholder={t('host_placeholder')}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="portscan-mode">Ports</Label>
+              <Label htmlFor="portscan-mode">{t('ports_label')}</Label>
               <Select value={mode} onValueChange={(v) => setMode(v as PortMode)} disabled={running}>
                 <SelectTrigger id="portscan-mode" size="lg" className="w-56">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="top100">Top {top100Count} ports</SelectItem>
-                  <SelectItem value="top1000">Top {top1000Count} ports</SelectItem>
-                  <SelectItem value="custom">Custom range</SelectItem>
+                  <SelectItem value="top100">{t('top_ports', { count: top100Count })}</SelectItem>
+                  <SelectItem value="top1000">{t('top_ports', { count: top1000Count })}</SelectItem>
+                  <SelectItem value="custom">{t('custom_range')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="portscan-speed">Speed</Label>
+              <Label htmlFor="portscan-speed">{t('speed_label')}</Label>
               <Select value={speed} onValueChange={(v) => setSpeed(v as ScanSpeed)} disabled={running}>
                 <SelectTrigger id="portscan-speed" size="lg" className="w-36">
                   <SelectValue />
@@ -264,7 +267,7 @@ export function PortScanner() {
                 <SelectContent>
                   {(Object.keys(SPEED_PRESETS) as ScanSpeed[]).map((s) => (
                     <SelectItem key={s} value={s}>
-                      {SPEED_PRESETS[s].label}
+                      {t(`speed_${s}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -273,19 +276,19 @@ export function PortScanner() {
             {!running ? (
               <Button size="lg" onClick={handleStart} disabled={starting} className="shrink-0">
                 {starting ? <Loader2 className="animate-spin" /> : <Play />}
-                Start scan
+                {t('start_scan')}
               </Button>
             ) : (
               <Button size="lg" variant="destructive" onClick={handleStop} className="shrink-0">
                 <Square />
-                Stop
+                {t('stop')}
               </Button>
             )}
           </div>
 
           {mode === 'custom' && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="portscan-custom-spec">Custom port spec</Label>
+              <Label htmlFor="portscan-custom-spec">{t('custom_port_spec_label')}</Label>
               <Input
                 id="portscan-custom-spec"
                 size="lg"
@@ -293,35 +296,35 @@ export function PortScanner() {
                 value={customSpec}
                 disabled={running}
                 onChange={(e) => setCustomSpec(e.target.value)}
-                placeholder="22,80,443,8000-8100"
+                placeholder={t('custom_port_spec_placeholder')}
               />
               {customError && <p className="text-xs text-destructive">{customError}</p>}
             </div>
           )}
 
           <p className="text-xs text-muted-foreground">
-            {speed === 'fast' && 'High concurrency, short timeout — quickest, but may miss slow/filtered ports.'}
-            {speed === 'normal' && 'Balanced default — good for most targets.'}
-            {speed === 'cautious' && 'Low concurrency, longer timeout — gentler on the target and its rate limits.'}
+            {speed === 'fast' && t('speed_hint_fast')}
+            {speed === 'normal' && t('speed_hint_normal')}
+            {speed === 'cautious' && t('speed_hint_cautious')}
           </p>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary">{portCount.toLocaleString()} ports</Badge>
+            <Badge variant="secondary">{t('port_count', { count: portCount.toLocaleString() })}</Badge>
             {status && (
               <Badge variant="outline">
                 {status === 'running' && <Loader2 className="size-3 animate-spin" />}
                 {status}
-                {total !== null && ` · ${results.length}/${total} done`}
+                {total !== null && ` · ${results.length}/${total} ${t('done_suffix')}`}
               </Badge>
             )}
             {results.length > 0 && (
               <>
                 <Badge className="bg-success/15 text-success border-success/30" variant="outline">
-                  {openCount} open
+                  {t('open_count', { count: openCount })}
                 </Badge>
-                <Badge variant="secondary">{closedCount} closed</Badge>
+                <Badge variant="secondary">{t('closed_count', { count: closedCount })}</Badge>
                 <Badge variant="outline" className="border-warning text-warning">
-                  {filteredCount} filtered
+                  {t('filtered_count', { count: filteredCount })}
                 </Badge>
               </>
             )}
@@ -331,12 +334,12 @@ export function PortScanner() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-muted-foreground">Results</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('results_title')}</h3>
           {results.length === 0 ? (
             <EmptyState
               icon={Radar}
-              title="No results yet"
-              description="Set a target above and click Start scan."
+              title={t('empty_title')}
+              description={t('empty_description')}
             />
           ) : (
             <div className="border rounded-lg overflow-auto max-h-[32rem]">
@@ -344,15 +347,15 @@ export function PortScanner() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('port')}>
-                      Port <ArrowUpDown className="inline size-3" />
+                      {t('column_port')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('state')}>
-                      State <ArrowUpDown className="inline size-3" />
+                      {t('column_state')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Banner</TableHead>
+                    <TableHead>{t('column_service')}</TableHead>
+                    <TableHead>{t('column_banner')}</TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('duration_ms')}>
-                      Time <ArrowUpDown className="inline size-3" />
+                      {t('column_time')} <ArrowUpDown className="inline size-3" />
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -362,7 +365,7 @@ export function PortScanner() {
                       <TableCell className="font-mono text-xs">{r.port}</TableCell>
                       <TableCell>
                         <Badge variant={STATE_VARIANT[r.state]} className={STATE_CLASS[r.state]}>
-                          {r.state}
+                          {t(`state_${r.state}`)}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-mono text-xs">{r.service}</TableCell>

@@ -1,98 +1,89 @@
 import { ShieldAlert, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Step } from '@/components/guide-step'
 
+const mono = <code className="font-mono" />
+const bold = <b />
+const boldFg = <b className="text-foreground" />
+
 export function SqliGuide() {
+  const { t } = useTranslation('sqli-check')
+
   return (
     <div className="flex flex-col gap-6 text-sm">
       <div>
-        <h2 className="font-semibold mb-1">How to use</h2>
-        <p className="text-xs text-muted-foreground">
-          Two ways to test: automatic (the scanner does everything) or manual (you pick the
-          payload and test it by hand).
-        </p>
+        <h2 className="font-semibold mb-1">{t('guide_how_to_use_title')}</h2>
+        <p className="text-xs text-muted-foreground">{t('guide_intro')}</p>
       </div>
 
       <div className="flex flex-col gap-4">
-        <Step n={1} title="Pick a target with a parameter">
-          Paste a URL that has something to inject in the query string, like{' '}
-          <code className="font-mono">?id=1</code> or <code className="font-mono">?cat=2</code>.
-          If the endpoint only accepts POST, fill in the Body field too (format{' '}
-          <code className="font-mono">key=value&other=value</code>). If you need a login/session,
-          paste the header in <code className="font-mono">Headers</code> (e.g.{' '}
-          <code className="font-mono">Authorization: Bearer ...</code> or{' '}
-          <code className="font-mono">Cookie: session=...</code>).
+        <Step n={1} title={t('guide_step1_title')}>
+          <Trans
+            i18nKey="guide_step1_body"
+            ns="sqli-check"
+            components={[mono, mono, mono, mono, mono, mono]}
+          />
         </Step>
 
-        <Step n={2} title='Automatic mode: click "Scan"'>
-          The scanner swaps each parameter's value, one at a time, through each of the 18
-          wordlist payloads — and compares the response to a "clean" request (baseline) to spot
-          differences in error, status, size, or time.
+        <Step n={2} title={t('guide_step2_title')}>
+          {t('guide_step2_body')}
         </Step>
 
-        <Step n={3} title='Manual mode: click "Use" on the wordlist'>
-          Copies the payload to the clipboard. Paste it directly into the URL (in place of the
-          parameter value), into the Body, or send it to Repeater to see the full response
-          yourself.
+        <Step n={3} title={t('guide_step3_title')}>
+          {t('guide_step3_body')}
         </Step>
 
-        <Step n={4} title="Read the results per parameter">
-          Each tested parameter becomes a card. Only payloads that produced some signal show up
-          there — the "no signal" ones stay hidden (counted in the card's footer).
+        <Step n={4} title={t('guide_step4_title')}>
+          {t('guide_step4_body')}
         </Step>
       </div>
 
       <div>
-        <h2 className="font-semibold mb-2">What each icon means</h2>
+        <h2 className="font-semibold mb-2">{t('guide_icons_title')}</h2>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <ShieldAlert className="size-4 text-destructive shrink-0" />
             <span className="text-xs">
-              <b>Critical</b> — database error in the response, or a confirmed time delay. Strong
-              signal of a real SQLi.
+              <Trans i18nKey="guide_icon_critical_body" ns="sqli-check" components={[bold]} />
             </span>
           </div>
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-warning shrink-0" />
             <span className="text-xs">
-              <b>Warning</b> — response status or size changed. Could be SQLi, could be
-              coincidence — worth investigating by hand.
+              <Trans i18nKey="guide_icon_warning_body" ns="sqli-check" components={[bold]} />
             </span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="size-4 text-muted-foreground shrink-0" />
             <span className="text-xs">
-              <b>Info</b> — nothing abnormal detected for this payload.
+              <Trans i18nKey="guide_icon_info_body" ns="sqli-check" components={[bold]} />
             </span>
           </div>
         </div>
       </div>
 
       <div>
-        <h2 className="font-semibold mb-2">Payload types</h2>
+        <h2 className="font-semibold mb-2">{t('guide_payload_types_title')}</h2>
         <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
           <p>
-            <b className="text-foreground">Error-based</b> — tries to break the query (quotes,
-            UNION SELECT) expecting a SQL syntax error to leak into the response.
+            <Trans i18nKey="guide_payload_error_body" ns="sqli-check" components={[boldFg]} />
           </p>
           <p>
-            <b className="text-foreground">Boolean-based</b> — injects always-true/always-false
-            conditions (<code className="font-mono">OR 1=1</code>) expecting the response content
-            to change.
+            <Trans
+              i18nKey="guide_payload_boolean_body"
+              ns="sqli-check"
+              components={[boldFg, mono]}
+            />
           </p>
           <p>
-            <b className="text-foreground">Time-based</b> — injects a delay (
-            <code className="font-mono">SLEEP(3)</code>) and measures whether the response really
-            took longer — useful when there's no error or visible difference ("blind" SQLi).
+            <Trans i18nKey="guide_payload_time_body" ns="sqli-check" components={[boldFg, mono]} />
           </p>
         </div>
       </div>
 
       <div className="flex gap-2 items-start bg-muted/40 rounded-lg p-3">
         <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-        <p className="text-xs text-muted-foreground">
-          This makes real requests against the target (including deliberate delays). Only use it
-          on targets you have explicit authorization to test.
-        </p>
+        <p className="text-xs text-muted-foreground">{t('guide_footer_note')}</p>
       </div>
     </div>
   )

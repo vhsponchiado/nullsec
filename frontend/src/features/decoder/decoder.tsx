@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,13 +31,14 @@ function toHexDump(s: string): string {
 
 let nextPanelId = 1
 
-function makeInputPanel(): Panel {
-  return { id: 0, label: 'Input', content: '', view: 'text' }
+function makeInputPanel(label: string): Panel {
+  return { id: 0, label, content: '', view: 'text' }
 }
 
 export function Decoder() {
+  const { t } = useTranslation('decoder')
   const [operations, setOperations] = useState<DecodeOperation[]>([])
-  const [panels, setPanels] = useState<Panel[]>([makeInputPanel()])
+  const [panels, setPanels] = useState<Panel[]>([makeInputPanel(t('input_label'))])
   const [busyIndex, setBusyIndex] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { copiedValue: copiedId, copy } = useClipboardCopy<number>()
@@ -95,7 +97,7 @@ export function Decoder() {
     try {
       const steps = (await api.smartDecode(panel.content)).steps ?? []
       if (steps.length === 0) {
-        setError('Smart decode: no known encoding detected in this panel.')
+        setError(t('smart_decode_error'))
         return
       }
       const newPanels = steps.map((s) => ({
@@ -113,7 +115,7 @@ export function Decoder() {
   }
 
   function reset() {
-    setPanels([makeInputPanel()])
+    setPanels([makeInputPanel(t('input_label'))])
     setError(null)
   }
 
@@ -122,12 +124,12 @@ export function Decoder() {
       <div className="min-w-0 flex flex-col gap-4 overflow-auto pr-1">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-muted-foreground">
-            {panels.length} panel{panels.length === 1 ? '' : 's'}
+            {t('panel_count', { count: panels.length })}
           </h3>
           {panels.length > 1 && (
             <Button size="sm" variant="ghost" onClick={reset} className="text-muted-foreground">
               <RotateCcw />
-              Reset
+              {t('reset')}
             </Button>
           )}
         </div>
@@ -194,6 +196,7 @@ function DecoderPanelRow({
   onCopy,
   onRemove,
 }: DecoderPanelRowProps) {
+  const { t } = useTranslation('decoder')
   const textRef = useRef<HTMLTextAreaElement>(null)
   const displayValue = panel.view === 'hex' ? toHexDump(panel.content) : panel.content
 
@@ -208,12 +211,17 @@ function DecoderPanelRow({
               variant="ghost"
               disabled={!panel.content}
               onClick={onCopy}
-              aria-label={copied ? 'Copied' : 'Copy'}
+              aria-label={copied ? t('copied_aria') : t('copy_aria')}
             >
               {copied ? <Check className="text-success" /> : <Copy />}
             </Button>
             {removable && (
-              <Button size="icon-sm" variant="ghost" onClick={onRemove} aria-label="Remove panel">
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={onRemove}
+                aria-label={t('remove_panel_aria')}
+              >
                 <X />
               </Button>
             )}
@@ -225,7 +233,7 @@ function DecoderPanelRow({
           value={displayValue}
           readOnly={panel.view === 'hex'}
           onChange={(e) => onContentChange(e.target.value)}
-          placeholder="Paste text to encode/decode/hash…"
+          placeholder={t('input_placeholder')}
         />
       </div>
 
@@ -235,13 +243,13 @@ function DecoderPanelRow({
             onClick={() => onViewChange('text')}
             className={`flex-1 py-1 cursor-pointer ${panel.view === 'text' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
           >
-            Text
+            {t('view_text')}
           </button>
           <button
             onClick={() => onViewChange('hex')}
             className={`flex-1 py-1 cursor-pointer border-l ${panel.view === 'hex' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
           >
-            Hex
+            {t('view_hex')}
           </button>
         </div>
 
@@ -254,7 +262,7 @@ function DecoderPanelRow({
           }}
         >
           <SelectTrigger size="sm" className="w-full">
-            <SelectValue placeholder="Decode as …" />
+            <SelectValue placeholder={t('decode_placeholder')} />
           </SelectTrigger>
           <SelectContent>
             {reversibleOps.map((op) => (
@@ -274,7 +282,7 @@ function DecoderPanelRow({
           }}
         >
           <SelectTrigger size="sm" className="w-full">
-            <SelectValue placeholder="Encode as …" />
+            <SelectValue placeholder={t('encode_placeholder')} />
           </SelectTrigger>
           <SelectContent>
             {reversibleOps.map((op) => (
@@ -294,7 +302,7 @@ function DecoderPanelRow({
           }}
         >
           <SelectTrigger size="sm" className="w-full">
-            <SelectValue placeholder="Hash …" />
+            <SelectValue placeholder={t('hash_placeholder')} />
           </SelectTrigger>
           <SelectContent>
             {hashOps.map((op) => (
@@ -313,7 +321,7 @@ function DecoderPanelRow({
           onClick={onSmart}
         >
           {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
-          Smart decode
+          {t('smart_decode')}
         </Button>
       </div>
     </div>

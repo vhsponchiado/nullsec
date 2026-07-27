@@ -1,0 +1,18 @@
+{
+  "intercept_status_on": "Intercept on",
+  "intercept_status_off": "Intercept off",
+  "pending_badge_one": "{{count}} pending",
+  "pending_badge_other": "{{count}} pending",
+  "forward_all": "Forward all",
+  "pending_title": "Pending",
+  "empty_pending_title": "Nothing held",
+  "empty_pending_description": "Turn on intercept and browse through the proxy.",
+  "response_panel_title": "Response",
+  "request_panel_title": "Request",
+  "forward": "Forward",
+  "drop": "Drop",
+  "empty_selected_title": "Nothing selected",
+  "empty_selected_description": "Select a pending item to edit and release.",
+  "badge_response": "Response",
+  "badge_request": "Request"
+}

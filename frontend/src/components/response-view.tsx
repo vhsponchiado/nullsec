@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,7 +12,7 @@ interface ResponseViewProps {
   headersJSON: string
   body: string
   // When set, shows a "Download" button next to the Body label that saves
-  // the raw response body as a .txt file under this name. Off by default —
+  // the raw response body as a .txt file under this name. Off by default;
   // only the callers that want it (Repeater) pass it in.
   downloadFileName?: string
 }
@@ -33,19 +34,20 @@ function downloadTextFile(filename: string, content: string) {
 }
 
 export function ResponseView({ status, headersJSON, body, downloadFileName }: ResponseViewProps) {
+  const { t } = useTranslation('request-components')
   const headers = parseJSONHeaders(headersJSON)
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <Label>Status</Label>
+        <Label>{t('response_view_status')}</Label>
         <Badge variant={statusVariant(status)} className="text-sm">
-          {status === 0 ? '—' : status}
+          {status === 0 ? t('response_view_status_na') : status}
         </Badge>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="resp-headers">Headers</Label>
+        <Label htmlFor="resp-headers">{t('response_view_headers')}</Label>
         <Textarea
           id="resp-headers"
           className="font-mono text-sm min-h-32 resize-y"
@@ -56,7 +58,7 @@ export function ResponseView({ status, headersJSON, body, downloadFileName }: Re
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <Label>Body</Label>
+          <Label>{t('response_view_body')}</Label>
           {downloadFileName && (
             <Button
               size="sm"
@@ -65,7 +67,7 @@ export function ResponseView({ status, headersJSON, body, downloadFileName }: Re
               onClick={() => downloadTextFile(downloadFileName, body)}
             >
               <Download />
-              Download .txt
+              {t('response_view_download_txt')}
             </Button>
           )}
         </div>

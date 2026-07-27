@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, ChevronUp, SendHorizontal } from 'lucide-react'
@@ -12,6 +13,7 @@ export function XssScanItemView({
   item: XssScanItemResult
   onTest: (item: XssScanItemResult) => void
 }) {
+  const { t } = useTranslation('xss-check')
   const [open, setOpen] = useState(false)
   const vulnerable = item.report.summary.vulnerable
   return (
@@ -29,21 +31,25 @@ export function XssScanItemView({
         <div className="flex items-center gap-2 shrink-0">
           {vulnerable > 0 ? (
             <Badge variant="outline" className="border-destructive text-destructive">
-              {vulnerable} signal{vulnerable === 1 ? '' : 's'}
+              {t('signal_count', { count: vulnerable })}
             </Badge>
           ) : (
-            <Badge variant="secondary">No signal</Badge>
+            <Badge variant="secondary">{t('no_signal_badge')}</Badge>
           )}
           <Button
             size="sm"
             variant="outline"
             onClick={() => onTest(item)}
-            title="Load this request into Automatic mode above for further manual testing"
+            title={t('test_button_title')}
           >
             <SendHorizontal />
-            Test
+            {t('test_button')}
           </Button>
-          <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? 'Collapse' : 'Expand'}>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? t('collapse_label') : t('expand_label')}
+          >
             {open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
           </button>
         </div>

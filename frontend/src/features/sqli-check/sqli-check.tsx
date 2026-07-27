@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -19,9 +20,10 @@ interface SqliCheckProps {
 }
 
 export function SqliCheck({ seed }: SqliCheckProps) {
+  const { t } = useTranslation('sqli-check')
   const [mode, setMode] = useState<'auto' | 'manual' | 'scan'>('auto')
 
-  // The in-flight target request — shared by Automatic and Manual mode
+  // The in-flight target request, shared by Automatic and Manual mode
   // (both operate on the same URL/body/headers), set from a seed, typed in
   // directly, or loaded from a Scan result via "Test".
   const [method, setMethod] = useState('GET')
@@ -41,7 +43,7 @@ export function SqliCheck({ seed }: SqliCheckProps) {
     }
   }, [seed])
 
-  // Automatic mode's own state — kept in the container (rather than its own
+  // Automatic mode's own state, kept in the container (rather than its own
   // component) because its "Scan" button renders inside the shared target
   // form, next to the URL field.
   const [loading, setLoading] = useState(false)
@@ -84,9 +86,9 @@ export function SqliCheck({ seed }: SqliCheckProps) {
       <div className="min-w-0 flex flex-col gap-6 overflow-auto pr-1">
         <Tabs value={mode} onValueChange={(v) => setMode(v as 'auto' | 'manual' | 'scan')}>
           <TabsList variant="line" className="w-fit">
-            <TabsTrigger value="auto">Automatic</TabsTrigger>
-            <TabsTrigger value="manual">Manual</TabsTrigger>
-            <TabsTrigger value="scan">Scan (History)</TabsTrigger>
+            <TabsTrigger value="auto">{t('tab_automatic')}</TabsTrigger>
+            <TabsTrigger value="manual">{t('tab_manual')}</TabsTrigger>
+            <TabsTrigger value="scan">{t('tab_scan')}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -99,17 +101,17 @@ export function SqliCheck({ seed }: SqliCheckProps) {
             onMethodChange={setMethod}
             url={url}
             onUrlChange={setUrl}
-            urlPlaceholder="https://authorized-target.com/product?id=1"
+            urlPlaceholder={t('url_placeholder')}
             body={body}
             onBodyChange={setBody}
-            bodyPlaceholder="user=admin&pass=123"
+            bodyPlaceholder={t('body_placeholder')}
             headerRows={headerRows}
             onHeaderRowsChange={setHeaderRows}
             urlAction={
               mode === 'auto' ? (
                 <Button size="lg" onClick={handleScan} disabled={loading} className="shrink-0">
                   {loading && <Loader2 className="animate-spin" />}
-                  Scan
+                  {t('scan_button')}
                 </Button>
               ) : undefined
             }

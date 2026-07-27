@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -43,6 +44,7 @@ function groupFindings(findings: PassiveFinding[]): GroupedFinding[] {
 }
 
 function GroupCard({ group }: { group: GroupedFinding }) {
+  const { t } = useTranslation('passive-scan')
   const [open, setOpen] = useState(false)
   return (
     <div className="border rounded-lg min-w-0">
@@ -52,12 +54,12 @@ function GroupCard({ group }: { group: GroupedFinding }) {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium">{group.title}</span>
             <Badge variant="secondary">{group.host}</Badge>
-            <Badge variant="outline">{group.urls.length} page{group.urls.length === 1 ? '' : 's'}</Badge>
+            <Badge variant="outline">{t('page_count', { count: group.urls.length })}</Badge>
           </div>
           <p className="text-xs text-muted-foreground">{group.detail}</p>
           <Button size="sm" variant="ghost" className="w-fit -ml-2 text-muted-foreground" onClick={() => setOpen((v) => !v)}>
             {open ? <ChevronUp /> : <ChevronDown />}
-            {open ? 'Hide' : 'Show'} affected URLs
+            {t(open ? 'hide_affected_urls' : 'show_affected_urls')}
           </Button>
           {open && (
             <div className="flex flex-col gap-1 mt-1 max-h-40 overflow-auto">
@@ -75,6 +77,7 @@ function GroupCard({ group }: { group: GroupedFinding }) {
 }
 
 export function PassiveScan() {
+  const { t } = useTranslation('passive-scan')
   const [host, setHost] = useState('')
   const [loading, setLoading] = useState(false)
   const [report, setReport] = useState<PassiveReport | null>(null)
@@ -99,26 +102,26 @@ export function PassiveScan() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-w-0">
       <div className="min-w-0 flex flex-col gap-6 overflow-auto pr-1">
         <div className="flex flex-col gap-4 border rounded-lg p-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Scan captured traffic</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('scan_title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Analyzes everything already sitting in Proxy History — no new requests are made.
+            {t('scan_description')}
           </p>
 
           <div className="flex gap-2 items-end">
             <div className="flex flex-col gap-1.5 flex-1">
-              <Label htmlFor="passive-scan-host">Filter by host (optional)</Label>
+              <Label htmlFor="passive-scan-host">{t('host_filter_label')}</Label>
               <Input
                 id="passive-scan-host"
                 size="lg"
                 className="font-mono"
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
-                placeholder="example.com"
+                placeholder={t('host_placeholder')}
               />
             </div>
             <Button size="lg" onClick={handleScan} disabled={loading} className="shrink-0">
               {loading ? <Loader2 className="animate-spin" /> : <ScanEye />}
-              Scan
+              {t('scan_button')}
             </Button>
           </div>
 
@@ -126,16 +129,16 @@ export function PassiveScan() {
 
           {report && (
             <div className="flex gap-2 items-center flex-wrap">
-              <Badge variant="secondary">{report.summary.requests_scanned} requests scanned</Badge>
-              <Badge variant="secondary">{report.summary.findings} findings</Badge>
+              <Badge variant="secondary">{t('requests_scanned', { count: report.summary.requests_scanned })}</Badge>
+              <Badge variant="secondary">{t('findings_count', { count: report.summary.findings })}</Badge>
               {report.summary.critical > 0 && (
                 <Badge variant="outline" className="border-destructive text-destructive">
-                  {report.summary.critical} critical
+                  {t('critical_count', { count: report.summary.critical })}
                 </Badge>
               )}
               {report.summary.warning > 0 && (
                 <Badge variant="outline" className="border-warning text-warning">
-                  {report.summary.warning} warning
+                  {t('warning_count', { count: report.summary.warning })}
                 </Badge>
               )}
             </div>
@@ -147,11 +150,11 @@ export function PassiveScan() {
             {grouped.length === 0 ? (
               <EmptyState
                 icon={ScanEye}
-                title="No issues found"
+                title={t('empty_title')}
                 description={
                   report.summary.requests_scanned === 0
-                    ? 'Proxy History is empty — capture some traffic first.'
-                    : 'Nothing flagged across the scanned requests.'
+                    ? t('empty_description_no_traffic')
+                    : t('empty_description_no_findings')
                 }
               />
             ) : (

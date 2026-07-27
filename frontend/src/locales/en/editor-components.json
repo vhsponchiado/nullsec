@@ -1,0 +1,18 @@
+{
+  "headers_editor_header_placeholder": "Header",
+  "headers_editor_value_placeholder": "Value",
+  "headers_editor_remove_header": "Remove header",
+  "headers_editor_add_header": "Add header",
+  "headers_editor_browser_headers": "Browser headers",
+  "headers_editor_browser_headers_title": "Fill in User-Agent, Accept and Accept-Language as a real browser would send them: helps get past WAF rules that block Go's default User-Agent",
+  "json_editor_format_json": "Format JSON",
+  "json_editor_click_to_edit": "Click to edit...",
+  "json_view_empty": "(empty)",
+  "key_value_table_key": "Key",
+  "key_value_table_value": "Value",
+  "mark_button_title": "Mark selection as a payload position (§…§)",
+  "mark_button_aria_label": "Mark selection as a payload position",
+  "response_editor_status": "Status",
+  "response_editor_headers": "Headers",
+  "response_editor_body": "Body"
+}

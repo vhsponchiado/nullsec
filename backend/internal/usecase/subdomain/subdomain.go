@@ -1,14 +1,33 @@
-// Package subdomain implements a subdomain finder combining two techniques:
+// Package subdomain implements a subdomain finder combining these techniques:
 //
-//   - Passive: queries crt.sh (Certificate Transparency logs) for certificates
-//     issued for *.domain — reveals real subdomains without ever touching the
-//     target.
-//   - Active: DNS brute-force, trying common subdomain prefixes (from a
-//     SecLists wordlist, ranked by real-world frequency) and resolving each
-//     candidate.
+//   - Passive (subdomains): queries crt.sh (Certificate Transparency logs)
+//     for certificates issued for *.domain — reveals real subdomains without
+//     ever touching the target.
+//   - Passive (HackerTarget): queries HackerTarget's free hostsearch API,
+//     which aggregates passive DNS data independent of crt.sh — a different
+//     data source entirely, so it turns up names crt.sh doesn't have (and
+//     keeps working when crt.sh itself is down, which is common — it's a
+//     free, community-run service with no SLA).
+//   - Passive (keyword/broad): queries crt.sh for any certificate whose name
+//     contains a given keyword anywhere, with no requirement that it share
+//     the target domain's DNS hierarchy. This surfaces "sibling" domains a
+//     company registered under a similar-looking name (e.g. a QA/staging
+//     environment at qa-example.com rather than qa.example.com) — a plain
+//     subdomain search structurally cannot find these, since they aren't
+//     subdomains at all, just similarly-named, unrelated apex domains.
+//   - Active (subdomains): DNS brute-force, trying common subdomain prefixes
+//     (from a SecLists wordlist, ranked by real-world frequency) and
+//     resolving each candidate.
+//   - Active (sibling domains): the same wordlist, but joined with a hyphen
+//     instead of a dot (prefix + "-" + domain instead of prefix + "." +
+//     domain) — an active counterpart to the keyword/broad crt.sh search
+//     above, for organizations whose QA/staging/dev environment was never
+//     issued a publicly-trusted certificate at all (so it can never show up
+//     in Certificate Transparency, no matter how it's queried) but still
+//     resolves in DNS.
 //
-// This performs real DNS lookups (and one HTTPS request to crt.sh) — only
-// use it against domains you're authorized to test.
+// This performs real DNS lookups (and HTTPS requests to crt.sh) — only use
+// it against domains you're authorized to test.
 package subdomain
 
 import (
@@ -17,6 +36,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -53,6 +73,18 @@ const (
 	crtshTimeout       = 15 * time.Second
 )
 
+// Source tags recorded on each Result, identifying how a candidate was
+// found. Shared between the Go side and the frontend (see SOURCE_LABEL in
+// subdomain-finder.tsx) — keep the two in sync if these change.
+const (
+	sourceRoot         = "root"
+	sourceCRTSH        = "crtsh"
+	sourceCRTSHKeyword = "crtsh-keyword"
+	sourceHackerTarget = "hackertarget"
+	sourceBruteforce   = "bruteforce"
+	sourceSiblingBrute = "sibling-bruteforce"
+)
+
 // NormalizeDomain strips a scheme, path, port and trailing slash from user
 // input so pasting a full URL works the same as typing a bare domain.
 func NormalizeDomain(input string) string {
@@ -81,14 +113,34 @@ const crtshRetries = 2
 var crtshRetryDelay = 2 * time.Second
 
 // queryCRTSH fetches every certificate name (including SANs) crt.sh has on
-// record for *.domain, returning the deduped, lowercased hostnames. It
-// retries on failure since a single crt.sh timeout/hiccup is common and
-// otherwise silently drops every subdomain that was only ever discoverable
-// through Certificate Transparency, not the brute-force wordlist.
+// record for *.domain, returning the deduped, lowercased hostnames that are
+// domain itself or a true subdomain of it. It retries on failure since a
+// single crt.sh timeout/hiccup is common and otherwise silently drops every
+// subdomain that was only ever discoverable through Certificate
+// Transparency, not the brute-force wordlist.
 func queryCRTSH(ctx context.Context, httpClients HTTPClientProvider, domain string) ([]string, error) {
+	suffix := "." + domain
+	keep := func(name string) bool { return name == domain || strings.HasSuffix(name, suffix) }
+	return queryCRTSHWithRetry(ctx, httpClients, "%."+domain, keep)
+}
+
+// queryCRTSHKeyword fetches every certificate name (including SANs) crt.sh
+// has on record containing keyword anywhere, with no requirement that the
+// match share domain's DNS hierarchy — this is what surfaces a differently
+// registered, similarly-named "sibling" domain (see the package doc
+// comment). Every name that matches is kept, so callers should expect
+// results with no structural relationship to the original target.
+func queryCRTSHKeyword(ctx context.Context, httpClients HTTPClientProvider, keyword string) ([]string, error) {
+	keep := func(string) bool { return true }
+	return queryCRTSHWithRetry(ctx, httpClients, "%"+keyword+"%", keep)
+}
+
+// queryCRTSHWithRetry runs queryCRTSHOnce up to crtshRetries times, retrying
+// on any transient failure (timeout, rate-limit, connection reset).
+func queryCRTSHWithRetry(ctx context.Context, httpClients HTTPClientProvider, query string, keep func(string) bool) ([]string, error) {
 	var lastErr error
 	for attempt := 1; attempt <= crtshRetries; attempt++ {
-		names, err := queryCRTSHOnce(ctx, httpClients, domain)
+		names, err := queryCRTSHOnce(ctx, httpClients, query, keep)
 		if err == nil {
 			return names, nil
 		}
@@ -105,11 +157,13 @@ func queryCRTSH(ctx context.Context, httpClients HTTPClientProvider, domain stri
 	return nil, lastErr
 }
 
-func queryCRTSHOnce(ctx context.Context, httpClients HTTPClientProvider, domain string) ([]string, error) {
+// queryCRTSHOnce runs query against crt.sh once and returns every deduped,
+// lowercased certificate name for which keep returns true.
+func queryCRTSHOnce(ctx context.Context, httpClients HTTPClientProvider, query string, keep func(string) bool) ([]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, crtshTimeout)
 	defer cancel()
 
-	reqURL := fmt.Sprintf("https://crt.sh/?q=%%.%s&output=json", domain)
+	reqURL := fmt.Sprintf("https://crt.sh/?q=%s&output=json", query)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
@@ -132,15 +186,11 @@ func queryCRTSHOnce(ctx context.Context, httpClients HTTPClientProvider, domain 
 
 	seen := make(map[string]bool)
 	var out []string
-	suffix := "." + domain
 	for _, e := range entries {
 		for _, line := range strings.Split(e.NameValue, "\n") {
 			name := strings.ToLower(strings.TrimSpace(line))
 			name = strings.TrimPrefix(name, "*.")
-			if name != domain && !strings.HasSuffix(name, suffix) {
-				continue
-			}
-			if name == "" || seen[name] {
+			if name == "" || !keep(name) || seen[name] {
 				continue
 			}
 			seen[name] = true
@@ -150,8 +200,73 @@ func queryCRTSHOnce(ctx context.Context, httpClients HTTPClientProvider, domain 
 	return out, nil
 }
 
+const hackerTargetTimeout = 15 * time.Second
+
+// hackerTargetRateLimited is the substring HackerTarget's free (no API key)
+// tier responds with once the caller's daily quota is used up — the
+// response is still HTTP 200 with a plain-text body, not an HTTP error
+// status, so this has to be checked explicitly rather than relying on the
+// status code.
+const hackerTargetRateLimited = "API count exceeded"
+
+// queryHackerTarget fetches every subdomain HackerTarget's free hostsearch
+// API has on record for domain via its own passive DNS dataset — a
+// different data source from crt.sh entirely, so it turns up names crt.sh
+// doesn't have, and keeps working when crt.sh itself is down.
+func queryHackerTarget(ctx context.Context, httpClients HTTPClientProvider, domain string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, hackerTargetTimeout)
+	defer cancel()
+
+	reqURL := "https://api.hackertarget.com/hostsearch/?q=" + domain
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := httpClients.HTTPClient(hackerTargetTimeout).Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("hackertarget returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return nil, err
+	}
+	text := string(body)
+	if strings.Contains(text, hackerTargetRateLimited) {
+		return nil, errors.New("hackertarget's free daily quota is used up for this IP")
+	}
+
+	suffix := "." + domain
+	seen := make(map[string]bool)
+	var out []string
+	for _, line := range strings.Split(text, "\n") {
+		host, _, _ := strings.Cut(strings.TrimSpace(line), ",")
+		host = strings.ToLower(host)
+		if host == "" || seen[host] {
+			continue
+		}
+		if host != domain && !strings.HasSuffix(host, suffix) {
+			continue
+		}
+		seen[host] = true
+		out = append(out, host)
+	}
+	return out, nil
+}
+
 type Result struct {
-	Subdomain  string   `json:"subdomain"`
+	Subdomain string `json:"subdomain"`
+	// SameRoot is false for a keyword/broad-search hit that isn't actually
+	// domain itself or a subdomain of it — just a similarly-named, distinct
+	// apex domain. The frontend uses this to avoid implying a DNS
+	// relationship that doesn't exist.
+	SameRoot   bool     `json:"same_root"`
 	Resolved   bool     `json:"resolved"`
 	IPs        []string `json:"ips,omitempty"`
 	Sources    []string `json:"sources"`
@@ -159,11 +274,27 @@ type Result struct {
 }
 
 type StartRequest struct {
-	Domain       string `json:"domain"`
-	UseCRTSH     bool   `json:"use_crtsh"`
-	WordlistSize int    `json:"wordlist_size"` // 0 disables brute-forcing
-	Concurrency  int    `json:"concurrency"`
-	TimeoutMs    int    `json:"timeout_ms"`
+	Domain   string `json:"domain"`
+	UseCRTSH bool   `json:"use_crtsh"`
+	// UseHackerTarget additionally queries HackerTarget's free hostsearch
+	// API (see queryHackerTarget) — an independent passive DNS data source
+	// from crt.sh, so it finds different names and keeps working when
+	// crt.sh itself is down.
+	UseHackerTarget bool `json:"use_hackertarget"`
+	WordlistSize    int  `json:"wordlist_size"` // 0 disables brute-forcing
+	// CRTSHKeyword, if non-empty, additionally runs a broad crt.sh search
+	// for this keyword (see queryCRTSHKeyword) — independent of UseCRTSH
+	// and WordlistSize, since it answers a different question ("what other
+	// domains has this org registered that look related?") rather than
+	// "what subdomains does this domain have?".
+	CRTSHKeyword string `json:"crtsh_keyword"`
+	// SiblingWordlistSize, like WordlistSize, brute-forces prefixes from
+	// Wordlist against domain, but joined with "-" instead of "." — guessing
+	// sibling apex domains (qa-domain.com) instead of subdomains
+	// (qa.domain.com). 0 disables it.
+	SiblingWordlistSize int `json:"sibling_wordlist_size"`
+	Concurrency         int `json:"concurrency"`
+	TimeoutMs           int `json:"timeout_ms"`
 }
 
 type job struct {
@@ -191,8 +322,9 @@ func (m *Manager) Start(req StartRequest) (string, int, error) {
 	if domain == "" {
 		return "", 0, errors.New("domain is required")
 	}
-	if !req.UseCRTSH && req.WordlistSize <= 0 {
-		return "", 0, errors.New("enable crt.sh, DNS brute-force, or both")
+	keyword := strings.TrimSpace(req.CRTSHKeyword)
+	if !req.UseCRTSH && !req.UseHackerTarget && req.WordlistSize <= 0 && keyword == "" && req.SiblingWordlistSize <= 0 {
+		return "", 0, errors.New("enable crt.sh, HackerTarget, DNS brute-force, a keyword search, sibling-domain brute-force, or some combination")
 	}
 
 	concurrency := req.Concurrency
@@ -219,6 +351,10 @@ func (m *Manager) Start(req StartRequest) (string, int, error) {
 	if wordlistSize > len(Wordlist) {
 		wordlistSize = len(Wordlist)
 	}
+	siblingWordlistSize := req.SiblingWordlistSize
+	if siblingWordlistSize > len(Wordlist) {
+		siblingWordlistSize = len(Wordlist)
+	}
 
 	id := uuid.NewString()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -228,15 +364,15 @@ func (m *Manager) Start(req StartRequest) (string, int, error) {
 	m.jobs[id] = j
 	m.mu.Unlock()
 
-	go m.run(ctx, id, j, domain, req.UseCRTSH, wordlistSize, timeout, concurrency)
+	go m.run(ctx, id, j, domain, req.UseCRTSH, req.UseHackerTarget, keyword, wordlistSize, siblingWordlistSize, timeout, concurrency)
 
 	// The candidate count (and therefore total) isn't known until crt.sh
 	// responds, which happens inside run(); the caller gets the eventual
 	// total via the first snapshot/WS updates instead of blocking here.
-	return id, wordlistSize + 1, nil
+	return id, wordlistSize + siblingWordlistSize + 1, nil
 }
 
-func (m *Manager) run(ctx context.Context, id string, j *job, domain string, useCRTSH bool, wordlistSize int, timeout time.Duration, concurrency int) {
+func (m *Manager) run(ctx context.Context, id string, j *job, domain string, useCRTSH, useHackerTarget bool, keyword string, wordlistSize, siblingWordlistSize int, timeout time.Duration, concurrency int) {
 	candidates := make(map[string]map[string]bool)
 	addCandidate := func(name, source string) {
 		if candidates[name] == nil {
@@ -245,15 +381,21 @@ func (m *Manager) run(ctx context.Context, id string, j *job, domain string, use
 		candidates[name][source] = true
 	}
 
-	addCandidate(domain, "root")
+	addCandidate(domain, sourceRoot)
+
+	var warnings []string
+	addWarning := func(w string) {
+		j.mu.Lock()
+		warnings = append(warnings, w)
+		j.warning = strings.Join(warnings, "; ")
+		j.mu.Unlock()
+	}
 
 	if useCRTSH {
 		names, err := queryCRTSH(ctx, m.httpClients, domain)
 		switch {
 		case err != nil:
-			j.mu.Lock()
-			j.warning = "crt.sh lookup failed: " + err.Error()
-			j.mu.Unlock()
+			addWarning("crt.sh lookup failed: " + err.Error())
 		case len(names) == 0:
 			// crt.sh answered with no error but zero matching certificates.
 			// That's sometimes a genuine result (a domain with no other
@@ -262,18 +404,48 @@ func (m *Manager) run(ctx context.Context, id string, j *job, domain string, use
 			// gives no way to tell those apart. Flag it so a run that looks
 			// suspiciously thinner than a previous one isn't mistaken for
 			// "these subdomains stopped existing."
-			j.mu.Lock()
-			j.warning = "crt.sh returned no certificates for this domain — this can be a genuine empty result, or crt.sh silently truncating/rate-limiting; re-run if you expected more here"
-			j.mu.Unlock()
+			addWarning("crt.sh returned no certificates for this domain — this can be a genuine empty result, or crt.sh silently truncating/rate-limiting; re-run if you expected more here")
 		default:
 			for _, name := range names {
-				addCandidate(name, "crtsh")
+				addCandidate(name, sourceCRTSH)
+			}
+		}
+	}
+
+	if useHackerTarget {
+		names, err := queryHackerTarget(ctx, m.httpClients, domain)
+		switch {
+		case err != nil:
+			addWarning("HackerTarget lookup failed: " + err.Error())
+		case len(names) == 0:
+			addWarning("HackerTarget returned no subdomains for this domain — this can be a genuine empty result, or a quota/rate-limit issue; re-run if you expected more here")
+		default:
+			for _, name := range names {
+				addCandidate(name, sourceHackerTarget)
+			}
+		}
+	}
+
+	if keyword != "" {
+		names, err := queryCRTSHKeyword(ctx, m.httpClients, keyword)
+		switch {
+		case err != nil:
+			addWarning("crt.sh keyword search failed: " + err.Error())
+		case len(names) == 0:
+			addWarning(fmt.Sprintf("crt.sh keyword search for %q returned no certificates — this can be genuine, or crt.sh silently truncating/rate-limiting; re-run if you expected more here", keyword))
+		default:
+			for _, name := range names {
+				addCandidate(name, sourceCRTSHKeyword)
 			}
 		}
 	}
 
 	for i := 0; i < wordlistSize; i++ {
-		addCandidate(Wordlist[i]+"."+domain, "bruteforce")
+		addCandidate(Wordlist[i]+"."+domain, sourceBruteforce)
+	}
+
+	for i := 0; i < siblingWordlistSize; i++ {
+		addCandidate(Wordlist[i]+"-"+domain, sourceSiblingBrute)
 	}
 
 	if len(candidates) > MaxCandidates {
@@ -306,7 +478,7 @@ runLoop:
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			result := resolveOne(ctx, name, sources, timeout)
+			result := resolveOne(ctx, name, domain, sources, timeout)
 
 			j.mu.Lock()
 			j.results = append(j.results, result)
@@ -331,7 +503,7 @@ runLoop:
 	m.hub.Broadcast(eventType, map[string]any{"scan_id": id})
 }
 
-func resolveOne(ctx context.Context, name string, sourceSet map[string]bool, timeout time.Duration) Result {
+func resolveOne(ctx context.Context, name, domain string, sourceSet map[string]bool, timeout time.Duration) Result {
 	started := time.Now()
 	lookupCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -340,13 +512,14 @@ func resolveOne(ctx context.Context, name string, sourceSet map[string]bool, tim
 	for s := range sourceSet {
 		sources = append(sources, s)
 	}
+	sameRoot := name == domain || strings.HasSuffix(name, "."+domain)
 
 	ips, err := net.DefaultResolver.LookupHost(lookupCtx, name)
 	durationMs := time.Since(started).Milliseconds()
 	if err != nil {
-		return Result{Subdomain: name, Resolved: false, Sources: sources, DurationMs: durationMs}
+		return Result{Subdomain: name, SameRoot: sameRoot, Resolved: false, Sources: sources, DurationMs: durationMs}
 	}
-	return Result{Subdomain: name, Resolved: true, IPs: ips, Sources: sources, DurationMs: durationMs}
+	return Result{Subdomain: name, SameRoot: sameRoot, Resolved: true, IPs: ips, Sources: sources, DurationMs: durationMs}
 }
 
 func (m *Manager) Stop(id string) bool {

@@ -357,6 +357,10 @@ export interface PortScanResultEvent {
 
 export interface SubdomainResult {
   subdomain: string
+  // False for a keyword/broad-search hit that isn't actually the target
+  // domain or a subdomain of it — just a similarly-named, distinct apex
+  // domain (see subdomain.go's package doc comment).
+  same_root: boolean
   resolved: boolean
   ips?: string[]
   sources: string[]
@@ -366,7 +370,20 @@ export interface SubdomainResult {
 export interface SubdomainStartRequest {
   domain: string
   use_crtsh: boolean
+  // Queries HackerTarget's free hostsearch API — an independent passive DNS
+  // data source from crt.sh, so it finds different names and keeps working
+  // when crt.sh itself is down.
+  use_hackertarget?: boolean
   wordlist_size: number
+  // If non-empty, additionally runs a broad crt.sh search for this keyword
+  // — independent of use_crtsh/wordlist_size, since it finds unrelated
+  // "sibling" domains rather than subdomains.
+  crtsh_keyword?: string
+  // If > 0, additionally brute-forces Wordlist prefixes joined with "-"
+  // instead of "." (qa-domain.com instead of qa.domain.com) — guesses
+  // sibling apex domains via DNS instead of certificate transparency, for
+  // when the sibling was never issued a publicly-trusted cert at all.
+  sibling_wordlist_size?: number
   timeout_ms?: number
   concurrency?: number
 }

@@ -48,11 +48,17 @@ export function SubdomainFinder() {
   const SOURCE_LABEL: Record<string, string> = {
     root: t('source_root'),
     crtsh: t('source_crtsh'),
+    'crtsh-keyword': t('source_crtsh_keyword'),
     bruteforce: t('source_bruteforce'),
+    'sibling-bruteforce': t('source_sibling_bruteforce'),
+    hackertarget: t('source_hackertarget'),
   }
   const [domain, setDomain] = useState('')
   const [useCRTSH, setUseCRTSH] = useState(true)
+  const [useHackerTarget, setUseHackerTarget] = useState(false)
+  const [keyword, setKeyword] = useState('')
   const [wordlistSize, setWordlistSize] = useState('1000')
+  const [siblingWordlistSize, setSiblingWordlistSize] = useState('0')
   const [wordlistTotal, setWordlistTotal] = useState(5000)
   const [speed, setSpeed] = useState<ScanSpeed>('normal')
   const [showUnresolved, setShowUnresolved] = useState(false)
@@ -102,7 +108,13 @@ export function SubdomainFinder() {
       setStartError(t('domain_required'))
       return
     }
-    if (!useCRTSH && wordlistSize === '0') {
+    if (
+      !useCRTSH &&
+      !useHackerTarget &&
+      wordlistSize === '0' &&
+      !keyword.trim() &&
+      siblingWordlistSize === '0'
+    ) {
       setStartError(t('crtsh_or_bruteforce_required'))
       return
     }
@@ -118,7 +130,10 @@ export function SubdomainFinder() {
       const resp = await api.startSubdomainScan({
         domain: domain.trim(),
         use_crtsh: useCRTSH,
+        use_hackertarget: useHackerTarget,
         wordlist_size: parseInt(wordlistSize, 10),
+        crtsh_keyword: keyword.trim() || undefined,
+        sibling_wordlist_size: parseInt(siblingWordlistSize, 10),
         concurrency: preset.concurrency,
         timeout_ms: preset.timeoutMs,
       })
@@ -209,49 +224,103 @@ export function SubdomainFinder() {
             )}
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Switch id="subdomain-use-crtsh" checked={useCRTSH} onCheckedChange={setUseCRTSH} disabled={running} />
-              <Label htmlFor="subdomain-use-crtsh" className="text-sm">{t('crtsh_label')}</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="subdomain-wordlist-size" className="text-sm text-muted-foreground">{t('dns_bruteforce_label')}</Label>
-              <Select value={wordlistSize} onValueChange={setWordlistSize} disabled={running}>
-                <SelectTrigger id="subdomain-wordlist-size" size="lg" className="w-56">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">{t('wordlist_off')}</SelectItem>
-                  <SelectItem value="100">{t('wordlist_top_100')}</SelectItem>
-                  <SelectItem value="1000">{t('wordlist_top_1000')}</SelectItem>
-                  <SelectItem value={String(wordlistTotal)}>
-                    {t('wordlist_full', { count: wordlistTotal })}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="subdomain-speed" className="text-sm text-muted-foreground">{t('speed_label')}</Label>
-              <Select value={speed} onValueChange={(v) => setSpeed(v as ScanSpeed)} disabled={running}>
-                <SelectTrigger id="subdomain-speed" size="lg" className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(SPEED_PRESETS) as ScanSpeed[]).map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t(`speed_${s}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="flex flex-col gap-3 rounded-lg border border-border/60 p-3">
+            <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+              {t('passive_lookups_label')}
+            </span>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <div className="flex items-center gap-2">
+                <Switch id="subdomain-use-crtsh" checked={useCRTSH} onCheckedChange={setUseCRTSH} disabled={running} />
+                <Label htmlFor="subdomain-use-crtsh" className="text-sm font-normal">{t('crtsh_label')}</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="subdomain-use-hackertarget"
+                  checked={useHackerTarget}
+                  onCheckedChange={setUseHackerTarget}
+                  disabled={running}
+                />
+                <Label htmlFor="subdomain-use-hackertarget" className="text-sm font-normal">
+                  {t('hackertarget_label')}
+                </Label>
+              </div>
+              <div className="flex flex-col gap-1.5 min-w-56 flex-1">
+                <Label htmlFor="subdomain-keyword" className="text-xs text-muted-foreground">
+                  {t('keyword_label')}
+                </Label>
+                <Input
+                  id="subdomain-keyword"
+                  className="font-mono"
+                  value={keyword}
+                  disabled={running}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder={t('keyword_placeholder')}
+                />
+              </div>
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            {speed === 'fast' && t('speed_hint_fast')}
-            {speed === 'normal' && t('speed_hint_normal')}
-            {speed === 'cautious' && t('speed_hint_cautious')}
-          </p>
+          <div className="flex flex-col gap-3 rounded-lg border border-border/60 p-3">
+            <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+              {t('active_bruteforce_label')}
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="subdomain-wordlist-size" className="text-xs text-muted-foreground">{t('dns_bruteforce_label')}</Label>
+                <Select value={wordlistSize} onValueChange={setWordlistSize} disabled={running}>
+                  <SelectTrigger id="subdomain-wordlist-size" size="lg" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">{t('wordlist_off')}</SelectItem>
+                    <SelectItem value="100">{t('wordlist_top_100')}</SelectItem>
+                    <SelectItem value="1000">{t('wordlist_top_1000')}</SelectItem>
+                    <SelectItem value={String(wordlistTotal)}>
+                      {t('wordlist_full', { count: wordlistTotal })}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="subdomain-sibling-size" className="text-xs text-muted-foreground">
+                  {t('sibling_bruteforce_label')}
+                </Label>
+                <Select value={siblingWordlistSize} onValueChange={setSiblingWordlistSize} disabled={running}>
+                  <SelectTrigger id="subdomain-sibling-size" size="lg" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">{t('wordlist_off')}</SelectItem>
+                    <SelectItem value="100">{t('wordlist_top_100')}</SelectItem>
+                    <SelectItem value="1000">{t('wordlist_top_1000')}</SelectItem>
+                    <SelectItem value={String(wordlistTotal)}>
+                      {t('wordlist_full', { count: wordlistTotal })}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="subdomain-speed" className="text-xs text-muted-foreground">{t('speed_label')}</Label>
+                <Select value={speed} onValueChange={(v) => setSpeed(v as ScanSpeed)} disabled={running}>
+                  <SelectTrigger id="subdomain-speed" size="lg" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(SPEED_PRESETS) as ScanSpeed[]).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {t(`speed_${s}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {speed === 'fast' && t('speed_hint_fast')}
+              {speed === 'normal' && t('speed_hint_normal')}
+              {speed === 'cautious' && t('speed_hint_cautious')}
+            </p>
+          </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {status && (
@@ -305,7 +374,14 @@ export function SubdomainFinder() {
                 <TableBody>
                   {sorted.map((r) => (
                     <TableRow key={r.subdomain}>
-                      <TableCell className="font-mono text-xs">{r.subdomain}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {r.subdomain}
+                        {!r.same_root && (
+                          <Badge variant="outline" className="ml-2 text-[10px] align-middle">
+                            {t('badge_different_domain')}
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {r.resolved ? (
                           <Badge className="bg-success/15 text-success border-success/30" variant="outline">

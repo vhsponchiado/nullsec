@@ -20,7 +20,20 @@ export function SubdomainFinderGuide() {
           {t('guide_step1_body')}
         </Step>
 
-        <Step n={2} title={t('guide_step2_title')}>
+        <Step n={2} title={t('guide_step_hackertarget_title')}>
+          {t('guide_step_hackertarget_body')}
+        </Step>
+
+        <Step n={3} title={t('guide_step_keyword_title')}>
+          <Trans
+            i18nKey="guide_step_keyword_body"
+            ns="subdomain-finder"
+            values={{ example1: 'qa-example.com', example2: 'example.com' }}
+            components={[mono, mono]}
+          />
+        </Step>
+
+        <Step n={4} title={t('guide_step2_title')}>
           <Trans
             i18nKey="guide_step2_body"
             ns="subdomain-finder"
@@ -29,15 +42,24 @@ export function SubdomainFinderGuide() {
           />
         </Step>
 
-        <Step n={3} title={t('guide_step3_title')}>
+        <Step n={5} title={t('guide_step_sibling_title')}>
+          <Trans
+            i18nKey="guide_step_sibling_body"
+            ns="subdomain-finder"
+            values={{ example1: 'qa-example.com', example2: 'dev-example.com' }}
+            components={[mono, mono]}
+          />
+        </Step>
+
+        <Step n={6} title={t('guide_step3_title')}>
           <Trans i18nKey="guide_step3_body" ns="subdomain-finder" components={[bold, bold, bold]} />
         </Step>
 
-        <Step n={4} title={t('guide_step4_title')}>
+        <Step n={7} title={t('guide_step4_title')}>
           {t('guide_step4_body')}
         </Step>
 
-        <Step n={5} title={t('guide_step5_title')}>
+        <Step n={8} title={t('guide_step5_title')}>
           <Trans
             i18nKey="guide_step5_body"
             ns="subdomain-finder"
